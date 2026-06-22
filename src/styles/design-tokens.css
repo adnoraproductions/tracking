@@ -1,0 +1,53 @@
+:root {
+  /* Light Theme Defaults */
+  --bg-color: #F7F8FA;
+  --surface-color: #FFFFFF;
+  --primary-color: #2563EB;
+  --text-color: #111827;
+  --text-secondary: #6B7280;
+  --border-color: #E5E7EB;
+
+  /* Spacing */
+  --spacing-8: 8px;
+  --spacing-16: 16px;
+  --spacing-24: 24px;
+  --spacing-32: 32px;
+
+  /* Border Radius */
+  --radius-12: 12px;
+  --radius-16: 16px;
+  --radius-24: 24px;
+
+  /* Shadows */
+  --shadow-premium: 0 4px 24px rgba(0, 0, 0, 0.04);
+  
+  /* Typography */
+  --font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* Dark Theme Override */
+    --bg-color: #0B0F14;
+    --surface-color: #111827;
+    --primary-color: #60A5FA;
+    --text-color: #F9FAFB;
+    --text-secondary: #94A3B8;
+    --border-color: #1F2937;
+    
+    --shadow-premium: 0 4px 24px rgba(0, 0, 0, 0.2);
+  }
+}
+
+body {
+  margin: 0;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  font-family: var(--font-family);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}

@@ -1,344 +1,310 @@
--- ADNORA OS - Supabase Production Database Schema
--- STRICT SECURITY VERSION (Reordered for Fresh Projects)
--- Run this in the Supabase SQL Editor
+-- ==============================================================================
+-- ADNORA CORE DATABASE SCHEMA
+-- Note: Execute this entire script first. No RLS is included in this file.
+-- ==============================================================================
 
--- ============================================================================
--- 0. CLEANUP (Drops existing tables so the script can be re-run)
--- ============================================================================
-DROP TABLE IF EXISTS public.wifi_config CASCADE;
-DROP TABLE IF EXISTS public.notifications CASCADE;
-DROP TABLE IF EXISTS public.attendance_events CASCADE;
-DROP TABLE IF EXISTS public.attendance_sessions CASCADE;
-DROP TABLE IF EXISTS public.drive_items CASCADE;
-DROP TABLE IF EXISTS public.journal_notes CASCADE;
-DROP TABLE IF EXISTS public.tasks CASCADE;
-DROP TABLE IF EXISTS public.project_members CASCADE;
-DROP TABLE IF EXISTS public.projects CASCADE;
-DROP TABLE IF EXISTS public.clients CASCADE;
-DROP TABLE IF EXISTS public.departments CASCADE;
-DROP TABLE IF EXISTS public.profiles CASCADE;
+-- ------------------------------------------------------------------------------
+-- 1. CUSTOM ENUMS
+-- ------------------------------------------------------------------------------
+CREATE TYPE public.user_role AS ENUM ('admin', 'employee');
+CREATE TYPE public.profile_status AS ENUM ('active', 'inactive');
+CREATE TYPE public.work_mode_type AS ENUM ('permanent_office', 'permanent_wfh', 'hybrid', 'temporary_wfh');
+CREATE TYPE public.attendance_day_status AS ENUM ('present', 'absent', 'half_day', 'on_leave');
+CREATE TYPE public.session_type AS ENUM ('office', 'field_work', 'wfh');
+CREATE TYPE public.session_status AS ENUM ('working', 'on_break', 'ended', 'auto_closed');
+CREATE TYPE public.event_type AS ENUM ('session_started', 'break_out', 'break_in', 'session_ended', 'day_ended', 'auto_closed', 'correction_requested', 'correction_approved');
+CREATE TYPE public.correction_status AS ENUM ('pending', 'approved', 'rejected');
+CREATE TYPE public.leave_type AS ENUM ('casual', 'sick', 'lop');
+CREATE TYPE public.leave_status AS ENUM ('approved');
 
--- ============================================================================
--- 1. TABLES & FOREIGN KEYS
--- ============================================================================
-
--- 1.1 Profiles Table (Linked to auth.users)
-CREATE TABLE public.profiles (
-  id UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
-  email TEXT UNIQUE NOT NULL,
-  full_name TEXT NOT NULL,
-  role TEXT DEFAULT 'employee',
-  is_active BOOLEAN DEFAULT true,
-  onboarding_complete BOOLEAN DEFAULT false,
-  avatar_url TEXT,
-  phone TEXT,
-  department TEXT,
-  designation TEXT,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- 1.2 Departments
-CREATE TABLE public.departments (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  name TEXT NOT NULL,
-  description TEXT,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- 1.3 Clients
-CREATE TABLE public.clients (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  name TEXT NOT NULL,
-  email TEXT,
-  phone TEXT,
-  notes TEXT,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- 1.4 Projects
-CREATE TABLE public.projects (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  name TEXT NOT NULL,
-  description TEXT,
-  client_id UUID REFERENCES public.clients(id) ON DELETE SET NULL,
-  status TEXT DEFAULT 'planning', -- planning, active, paused, completed
-  start_date DATE,
-  due_date DATE,
-  manager_id UUID REFERENCES public.profiles(id),
-  progress INT DEFAULT 0,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- 1.5 Project Members
-CREATE TABLE public.project_members (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  project_id UUID REFERENCES public.projects(id) ON DELETE CASCADE,
-  user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
-  role TEXT DEFAULT 'member',
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  UNIQUE(project_id, user_id)
-);
-
--- 1.6 Tasks
-CREATE TABLE public.tasks (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  title TEXT NOT NULL,
-  description TEXT,
-  project_id UUID REFERENCES public.projects(id) ON DELETE CASCADE,
-  assignee_id UUID REFERENCES public.profiles(id),
-  status TEXT DEFAULT 'todo', -- todo, in_progress, review, done
-  priority TEXT DEFAULT 'medium', -- low, medium, high, urgent
-  due_date TIMESTAMPTZ,
-  checklist JSONB DEFAULT '[]'::jsonb,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- 1.7 Journal Notes
-CREATE TABLE public.journal_notes (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  project_id UUID REFERENCES public.projects(id) ON DELETE CASCADE,
-  creator_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
-  content TEXT NOT NULL,
-  is_private BOOLEAN DEFAULT false,
-  is_pinned BOOLEAN DEFAULT false,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- 1.8 Drive Items
-CREATE TABLE public.drive_items (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  project_id UUID REFERENCES public.projects(id) ON DELETE CASCADE,
-  name TEXT NOT NULL,
-  url TEXT NOT NULL,
-  uploaded_by UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- 1.9 Attendance Sessions (Daily Records)
-CREATE TABLE public.attendance_sessions (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
-  date DATE NOT NULL,
-  first_clock_in TIMESTAMPTZ,
-  last_clock_out TIMESTAMPTZ,
-  total_seconds INT DEFAULT 0,
-  break_seconds INT DEFAULT 0,
-  status TEXT DEFAULT 'active', -- active, completed, absent
-  UNIQUE(user_id, date)
-);
-
--- 1.10 Attendance Events (Detailed Logs)
-CREATE TABLE public.attendance_events (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  session_id UUID REFERENCES public.attendance_sessions(id) ON DELETE CASCADE,
-  user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
-  event_type TEXT NOT NULL, -- connect, disconnect
-  wifi_ssid TEXT,
-  wifi_bssid TEXT,
-  timestamp TIMESTAMPTZ DEFAULT NOW()
-);
-
--- 1.11 Notifications
-CREATE TABLE public.notifications (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
-  title TEXT NOT NULL,
-  message TEXT,
-  type TEXT DEFAULT 'info',
-  is_read BOOLEAN DEFAULT false,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- 1.12 WiFi Configuration
-CREATE TABLE public.wifi_config (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  ssid TEXT NOT NULL,
-  bssid TEXT,
-  label TEXT,
-  is_active BOOLEAN DEFAULT true,
-  created_by UUID REFERENCES public.profiles(id),
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
-
--- ============================================================================
--- 2. HELPER FUNCTIONS
--- ============================================================================
-
--- Helper Function to check if a user is an admin
-CREATE OR REPLACE FUNCTION public.is_admin(user_id uuid)
-RETURNS BOOLEAN AS $$
-  SELECT EXISTS (
-    SELECT 1 FROM public.profiles
-    WHERE id = user_id AND role = 'admin'
-  );
-$$ LANGUAGE sql SECURITY DEFINER;
-
-
--- ============================================================================
--- 3. ENABLE ROW LEVEL SECURITY
--- ============================================================================
-
-ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.departments ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.clients ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.projects ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.project_members ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.tasks ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.journal_notes ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.drive_items ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.attendance_sessions ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.attendance_events ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.wifi_config ENABLE ROW LEVEL SECURITY;
-
-
--- ============================================================================
--- 4. RLS POLICIES
--- ============================================================================
-
--- Profiles
-CREATE POLICY "Users can read own profile" ON public.profiles FOR SELECT USING (auth.uid() = id);
-CREATE POLICY "Users can update own profile" ON public.profiles FOR UPDATE USING (auth.uid() = id);
-CREATE POLICY "Admins have full access to profiles" ON public.profiles FOR ALL USING (public.is_admin(auth.uid()));
+-- ------------------------------------------------------------------------------
+-- 2. TABLES
+-- ------------------------------------------------------------------------------
 
 -- Departments
-CREATE POLICY "Employees can view departments" ON public.departments FOR SELECT USING (auth.uid() IS NOT NULL);
-CREATE POLICY "Admins have full access to departments" ON public.departments FOR ALL USING (public.is_admin(auth.uid()));
-
--- Clients
-CREATE POLICY "Admins have full access to clients" ON public.clients FOR ALL USING (public.is_admin(auth.uid()));
-
--- Projects
-CREATE POLICY "Project members can view projects" ON public.projects FOR SELECT USING (
-  id IN (SELECT project_id FROM public.project_members WHERE user_id = auth.uid()) OR
-  public.is_admin(auth.uid())
-);
-CREATE POLICY "Admins have full access to projects" ON public.projects FOR ALL USING (public.is_admin(auth.uid()));
-
--- Project Members
-CREATE POLICY "Project members can view project members" ON public.project_members FOR SELECT USING (
-  auth.uid() = user_id OR 
-  project_id IN (SELECT project_id FROM public.project_members WHERE user_id = auth.uid()) OR
-  public.is_admin(auth.uid())
-);
-CREATE POLICY "Admins have full access to project members" ON public.project_members FOR ALL USING (public.is_admin(auth.uid()));
-
--- Tasks
-CREATE POLICY "Assigned users can view tasks" ON public.tasks FOR SELECT USING (
-  assignee_id = auth.uid() OR 
-  project_id IN (SELECT project_id FROM public.project_members WHERE user_id = auth.uid()) OR
-  public.is_admin(auth.uid())
-);
-CREATE POLICY "Assigned users can update tasks" ON public.tasks FOR UPDATE USING (
-  assignee_id = auth.uid() OR public.is_admin(auth.uid())
-);
-CREATE POLICY "Admins have full access to tasks" ON public.tasks FOR ALL USING (public.is_admin(auth.uid()));
-
--- Journal Notes
-CREATE POLICY "View journal notes" ON public.journal_notes FOR SELECT USING (
-  (is_private = false AND project_id IN (SELECT project_id FROM public.project_members WHERE user_id = auth.uid())) OR
-  (is_private = true AND creator_id = auth.uid()) OR
-  public.is_admin(auth.uid())
-);
-CREATE POLICY "Users can create journal notes" ON public.journal_notes FOR INSERT WITH CHECK (
-  creator_id = auth.uid() AND (project_id IN (SELECT project_id FROM public.project_members WHERE user_id = auth.uid()) OR public.is_admin(auth.uid()))
-);
-CREATE POLICY "Users can update own journal notes" ON public.journal_notes FOR UPDATE USING (creator_id = auth.uid() OR public.is_admin(auth.uid()));
-
--- Drive Items
-CREATE POLICY "Project members can view drive items" ON public.drive_items FOR SELECT USING (
-  project_id IN (SELECT project_id FROM public.project_members WHERE user_id = auth.uid()) OR
-  public.is_admin(auth.uid())
-);
-CREATE POLICY "Project members can upload drive items" ON public.drive_items FOR INSERT WITH CHECK (
-  uploaded_by = auth.uid() AND (project_id IN (SELECT project_id FROM public.project_members WHERE user_id = auth.uid()) OR public.is_admin(auth.uid()))
+CREATE TABLE public.departments (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name TEXT NOT NULL UNIQUE,
+    description TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Attendance Sessions
-CREATE POLICY "Users view own attendance" ON public.attendance_sessions FOR SELECT USING (user_id = auth.uid() OR public.is_admin(auth.uid()));
-CREATE POLICY "Users manage own attendance" ON public.attendance_sessions FOR INSERT WITH CHECK (user_id = auth.uid() OR public.is_admin(auth.uid()));
-CREATE POLICY "Users update own attendance" ON public.attendance_sessions FOR UPDATE USING (user_id = auth.uid() OR public.is_admin(auth.uid()));
-CREATE POLICY "Admins full attendance" ON public.attendance_sessions FOR ALL USING (public.is_admin(auth.uid()));
+-- App Settings (Singleton conceptual)
+CREATE TABLE public.app_settings (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    company_name TEXT NOT NULL DEFAULT 'Adnora',
+    default_geofence_radius INTEGER NOT NULL DEFAULT 100,
+    auto_close_hour TIME NOT NULL DEFAULT '08:00',
+    allow_multiple_devices BOOLEAN NOT NULL DEFAULT true,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
 
--- Attendance Events
-CREATE POLICY "Users view own attendance events" ON public.attendance_events FOR SELECT USING (user_id = auth.uid() OR public.is_admin(auth.uid()));
-CREATE POLICY "Users insert own attendance events" ON public.attendance_events FOR INSERT WITH CHECK (user_id = auth.uid() OR public.is_admin(auth.uid()));
+-- Profiles (Tied to Supabase Auth)
+CREATE TABLE public.profiles (
+    id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+    employee_code TEXT UNIQUE, -- e.g., AD001
+    email TEXT NOT NULL UNIQUE,
+    full_name TEXT NOT NULL,
+    dob DATE,
+    role user_role NOT NULL DEFAULT 'employee',
+    status profile_status NOT NULL DEFAULT 'active',
+    department_id UUID REFERENCES public.departments(id) ON DELETE SET NULL,
+    designation TEXT,
+    phone TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Office Settings
+CREATE TABLE public.office_settings (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name TEXT NOT NULL,
+    latitude DOUBLE PRECISION NOT NULL,
+    longitude DOUBLE PRECISION NOT NULL,
+    radius INTEGER NOT NULL DEFAULT 100,
+    is_active BOOLEAN NOT NULL DEFAULT false,
+    created_by UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Employee Work Modes
+CREATE TABLE public.employee_work_modes (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    employee_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+    mode work_mode_type NOT NULL,
+    start_date DATE,
+    end_date DATE,
+    notes TEXT,
+    created_by UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Employee Leaves (Admin Managed)
+CREATE TABLE public.employee_leaves (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    employee_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+    leave_type leave_type NOT NULL,
+    status leave_status NOT NULL DEFAULT 'approved',
+    start_date DATE NOT NULL,
+    end_date DATE NOT NULL,
+    reason TEXT,
+    created_by UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Attendance Days
+CREATE TABLE public.attendance_days (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    employee_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+    date DATE NOT NULL,
+    status attendance_day_status NOT NULL DEFAULT 'present',
+    total_work_minutes INTEGER DEFAULT 0,
+    total_break_minutes INTEGER DEFAULT 0,
+    total_overtime_minutes INTEGER DEFAULT 0,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE(employee_id, date)
+);
+
+-- Work Sessions
+CREATE TABLE public.work_sessions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    attendance_day_id UUID NOT NULL REFERENCES public.attendance_days(id) ON DELETE CASCADE,
+    employee_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+    session_type session_type NOT NULL,
+    status session_status NOT NULL DEFAULT 'working',
+    started_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    ended_at TIMESTAMP WITH TIME ZONE,
+    start_latitude DOUBLE PRECISION,
+    start_longitude DOUBLE PRECISION,
+    end_latitude DOUBLE PRECISION,
+    end_longitude DOUBLE PRECISION
+);
+
+-- Session Breaks
+CREATE TABLE public.session_breaks (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    work_session_id UUID NOT NULL REFERENCES public.work_sessions(id) ON DELETE CASCADE,
+    started_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    ended_at TIMESTAMP WITH TIME ZONE,
+    start_latitude DOUBLE PRECISION,
+    start_longitude DOUBLE PRECISION,
+    end_latitude DOUBLE PRECISION,
+    end_longitude DOUBLE PRECISION
+);
+
+-- Attendance Events (Immutable Audit)
+CREATE TABLE public.attendance_events (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    employee_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+    attendance_day_id UUID NOT NULL REFERENCES public.attendance_days(id) ON DELETE CASCADE,
+    event_type event_type NOT NULL,
+    session_type session_type,
+    latitude DOUBLE PRECISION,
+    longitude DOUBLE PRECISION,
+    timestamp TIMESTAMP WITH TIME ZONE NOT NULL,
+    notes TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Attendance Corrections
+CREATE TABLE public.attendance_corrections (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    employee_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+    attendance_day_id UUID NOT NULL REFERENCES public.attendance_days(id) ON DELETE CASCADE,
+    work_session_id UUID REFERENCES public.work_sessions(id) ON DELETE CASCADE,
+    status correction_status NOT NULL DEFAULT 'pending',
+    reason TEXT NOT NULL,
+    admin_notes TEXT,
+    resolved_by UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
+    resolved_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Holidays
+CREATE TABLE public.holidays (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name TEXT NOT NULL,
+    date DATE NOT NULL UNIQUE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Activity Logs (Immutable)
+CREATE TABLE public.activity_logs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    actor_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
+    actor_role TEXT,
+    action TEXT NOT NULL,
+    entity_type TEXT NOT NULL,
+    entity_id UUID NOT NULL,
+    metadata JSONB,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
 
 -- Notifications
-CREATE POLICY "Users view own notifications" ON public.notifications FOR SELECT USING (user_id = auth.uid() OR public.is_admin(auth.uid()));
-CREATE POLICY "Users update own notifications" ON public.notifications FOR UPDATE USING (user_id = auth.uid() OR public.is_admin(auth.uid()));
-CREATE POLICY "Admins full notifications" ON public.notifications FOR ALL USING (public.is_admin(auth.uid()));
+CREATE TABLE public.notifications (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+    title TEXT NOT NULL,
+    message TEXT NOT NULL,
+    type TEXT,
+    is_read BOOLEAN NOT NULL DEFAULT false,
+    read_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
 
--- WiFi Configuration
-CREATE POLICY "Employees can view wifi configs" ON public.wifi_config FOR SELECT USING (auth.uid() IS NOT NULL);
-CREATE POLICY "Admins can manage wifi configs" ON public.wifi_config FOR ALL USING (public.is_admin(auth.uid()));
+-- Device Sessions
+CREATE TABLE public.device_sessions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+    device_name TEXT,
+    browser TEXT,
+    platform TEXT,
+    last_seen TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
 
+-- ------------------------------------------------------------------------------
+-- 3. INDEXES
+-- ------------------------------------------------------------------------------
+CREATE INDEX idx_profiles_role ON public.profiles(role);
+CREATE INDEX idx_attendance_days_emp_date ON public.attendance_days(employee_id, date);
+CREATE INDEX idx_work_sessions_day ON public.work_sessions(attendance_day_id);
+CREATE INDEX idx_work_sessions_employee ON public.work_sessions(employee_id);
+CREATE INDEX idx_attendance_events_emp_time ON public.attendance_events(employee_id, timestamp);
+CREATE INDEX idx_activity_logs_entity ON public.activity_logs(entity_type, entity_id);
+CREATE INDEX idx_notifications_user ON public.notifications(user_id, is_read);
+CREATE INDEX idx_device_sessions_user ON public.device_sessions(user_id, last_seen);
+CREATE INDEX idx_employee_leaves_emp ON public.employee_leaves(employee_id);
 
--- ============================================================================
--- 5. TRIGGER FUNCTIONS
--- ============================================================================
+-- Enforce Single Active Office Rule at Postgres level
+CREATE UNIQUE INDEX idx_single_active_office ON public.office_settings (is_active) WHERE is_active = true;
 
--- 5.1 Auto-create profile for new users
-CREATE OR REPLACE FUNCTION public.handle_new_user()
-RETURNS trigger AS $$
-BEGIN
-  INSERT INTO public.profiles (id, email, full_name, role)
-  VALUES (
-    new.id, 
-    new.email, 
-    COALESCE(new.raw_user_meta_data->>'full_name', 'User'), 
-    CASE WHEN new.email = 'abijithar.i8@gmail.com' THEN 'admin' ELSE 'employee' END
-  );
-  RETURN new;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+-- ------------------------------------------------------------------------------
+-- 4. FUNCTIONS & TRIGGERS
+-- ------------------------------------------------------------------------------
 
--- 5.2 Prevent Privilege Escalation via Role Modification
-CREATE OR REPLACE FUNCTION public.protect_role_escalation()
+-- Generic Updated_At Trigger Function
+CREATE OR REPLACE FUNCTION public.update_updated_at_column()
 RETURNS TRIGGER AS $$
 BEGIN
-  -- Allow dashboard (postgres) or service_role to bypass this check
-  IF current_user IN ('postgres', 'service_role') THEN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Apply generic triggers
+CREATE TRIGGER set_timestamp_profiles BEFORE UPDATE ON public.profiles FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER set_timestamp_departments BEFORE UPDATE ON public.departments FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER set_timestamp_app_settings BEFORE UPDATE ON public.app_settings FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER set_timestamp_office_settings BEFORE UPDATE ON public.office_settings FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER set_timestamp_employee_work_modes BEFORE UPDATE ON public.employee_work_modes FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER set_timestamp_attendance_corrections BEFORE UPDATE ON public.attendance_corrections FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- IS_ADMIN Helper Function
+CREATE OR REPLACE FUNCTION public.is_admin()
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1 FROM public.profiles
+    WHERE id = auth.uid() AND role = 'admin'
+  );
+END;
+$$;
+
+-- ROLE ESCALATION PROTECTION (Patched for Admin Bootstrap)
+CREATE OR REPLACE FUNCTION public.protect_role_escalation()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  -- Bypass trigger checks for internal database operations (SQL Editor / Service Role).
+  -- In these backend contexts, no JWT is present, so auth.uid() is reliably NULL.
+  IF auth.uid() IS NULL THEN
     RETURN NEW;
   END IF;
 
-  -- If the role is being changed, verify the user is an admin
-  IF NEW.role IS DISTINCT FROM OLD.role THEN
-    IF NOT public.is_admin(auth.uid()) THEN
-      RAISE EXCEPTION 'Privilege escalation attempt detected. Only admins can modify roles.';
+  -- Block standard API clients from updating protected fields unless they are Admins
+  IF NEW.role IS DISTINCT FROM OLD.role OR NEW.status IS DISTINCT FROM OLD.status THEN
+    IF NOT public.is_admin() THEN
+      RAISE EXCEPTION 'Unauthorized attempt to modify protected profile fields';
     END IF;
   END IF;
+  
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$;
 
+CREATE TRIGGER check_role_escalation
+  BEFORE UPDATE ON public.profiles
+  FOR EACH ROW EXECUTE FUNCTION public.protect_role_escalation();
 
--- ============================================================================
--- 6. TRIGGERS
--- ============================================================================
+-- Auto-create profile on auth.user signup
+CREATE OR REPLACE FUNCTION public.handle_new_user() 
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  INSERT INTO public.profiles (id, email, full_name, role)
+  VALUES (NEW.id, NEW.email, COALESCE(NEW.raw_user_meta_data->>'full_name', 'New Employee'), 'employee');
+  RETURN NEW;
+END;
+$$;
 
-DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
-  FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
-
-DROP TRIGGER IF EXISTS enforce_role_protection ON public.profiles;
-CREATE TRIGGER enforce_role_protection
-  BEFORE UPDATE ON public.profiles
-  FOR EACH ROW EXECUTE PROCEDURE public.protect_role_escalation();
-
--- ============================================================================
--- 7. PERMISSION GRANTS (Required for App Access)
--- ============================================================================
-GRANT USAGE ON SCHEMA public TO anon, authenticated;
-GRANT ALL ON ALL TABLES IN SCHEMA public TO anon, authenticated;
-GRANT ALL ON ALL ROUTINES IN SCHEMA public TO anon, authenticated;
-GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated;
-
-
-
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+A L T E R   T A B L E   p u b l i c . o f f i c e _ s e t t i n g s   A D D   C O L U M N   I F   N O T   E X I S T S   w o r k _ t a r g e t _ h o u r s   N U M E R I C ( 4 , 2 )   D E F A U L T   8 . 0 ;  
+ 

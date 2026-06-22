@@ -1,0 +1,167 @@
+import React, { useState, useEffect } from 'react';
+import { supabase } from '../../lib/supabase/client';
+import { Loader2, Users, Clock, AlertCircle, MapPin } from 'lucide-react';
+import { format, differenceInMinutes } from 'date-fns';
+
+export default function AdminDashboard() {
+  const [activeSessions, setActiveSessions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    fetchLiveData();
+    // In a real app, we would use Supabase Realtime subscriptions here
+    const interval = setInterval(fetchLiveData, 30000); // Poll every 30s
+    return () => clearInterval(interval);
+  }, []);
+
+  const fetchLiveData = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('work_sessions')
+        .select(`
+          id,
+          status,
+          started_at,
+          session_type,
+          start_latitude,
+          start_longitude,
+          profiles (
+            id,
+            full_name,
+            employee_code
+          )
+        `)
+        .in('status', ['working', 'on_break'])
+        .order('started_at', { ascending: false });
+
+      if (error) throw error;
+      setActiveSessions(data || []);
+    } catch (err) {
+      console.error(err);
+      setError('Failed to fetch live data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return <div style={{display: 'flex', justifyContent: 'center', padding: '40px'}}><Loader2 className="spinner" size={32} /></div>;
+  }
+
+  const workingCount = activeSessions.filter(s => s.status === 'working').length;
+  const breakCount = activeSessions.filter(s => s.status === 'on_break').length;
+
+  return (
+    <div>
+      <div className="admin-page-header">
+        <h1>Live Workforce Monitor</h1>
+        <p>Real-time overview of employees currently working or on break.</p>
+      </div>
+
+      {error && (
+        <div style={{ backgroundColor: '#fef2f2', color: '#ef4444', padding: '12px', borderRadius: '8px', marginBottom: '24px', fontSize: '14px' }}>
+          {error}
+        </div>
+      )}
+
+      {/* Metrics Row */}
+      <div className="admin-metrics-grid">
+        <div className="admin-card" style={{ marginBottom: 0, display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div style={{ backgroundColor: 'var(--admin-primary-light)', color: 'var(--admin-primary)', padding: '16px', borderRadius: '16px' }}>
+            <Users size={24} />
+          </div>
+          <div>
+            <h3 style={{ margin: 0, fontSize: '14px', color: 'var(--admin-text-muted)' }}>Total Active</h3>
+            <span style={{ fontSize: '28px', fontWeight: '700', color: 'var(--admin-text-dark)' }}>{activeSessions.length}</span>
+          </div>
+        </div>
+
+        <div className="admin-card" style={{ marginBottom: 0, display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div style={{ backgroundColor: '#dcfce7', color: '#16a34a', padding: '16px', borderRadius: '16px' }}>
+            <Clock size={24} />
+          </div>
+          <div>
+            <h3 style={{ margin: 0, fontSize: '14px', color: 'var(--admin-text-muted)' }}>Working</h3>
+            <span style={{ fontSize: '28px', fontWeight: '700', color: 'var(--admin-text-dark)' }}>{workingCount}</span>
+          </div>
+        </div>
+
+        <div className="admin-card" style={{ marginBottom: 0, display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div style={{ backgroundColor: '#fef3c7', color: '#d97706', padding: '16px', borderRadius: '16px' }}>
+            <AlertCircle size={24} />
+          </div>
+          <div>
+            <h3 style={{ margin: 0, fontSize: '14px', color: 'var(--admin-text-muted)' }}>On Break</h3>
+            <span style={{ fontSize: '28px', fontWeight: '700', color: 'var(--admin-text-dark)' }}>{breakCount}</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="admin-card">
+        <h2>Currently Checked In</h2>
+        
+        {activeSessions.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '40px', color: 'var(--admin-text-muted)' }}>
+            <p>No employees are currently checked in.</p>
+          </div>
+        ) : (
+          <div className="admin-table-container">
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>Employee</th>
+                  <th>Status</th>
+                  <th>Location Type</th>
+                  <th>Checked In At</th>
+                  <th>Duration</th>
+                </tr>
+              </thead>
+              <tbody>
+                {activeSessions.map(session => {
+                  const emp = session.profiles;
+                  const mins = differenceInMinutes(new Date(), new Date(session.started_at));
+                  const hours = Math.floor(mins / 60);
+                  const remMins = mins % 60;
+                  const durationStr = hours > 0 ? `${hours}h ${remMins}m` : `${remMins}m`;
+
+                  return (
+                    <tr key={session.id}>
+                      <td data-label="Employee">
+                        <div style={{ fontWeight: '600' }}>{emp?.full_name || 'Unknown'}</div>
+                        <div style={{ fontSize: '12px', color: 'var(--admin-text-muted)' }}>{emp?.employee_code || '-'}</div>
+                      </td>
+                      <td data-label="Status">
+                        <span className={`admin-badge ${session.status === 'working' ? 'green' : 'gray'}`}>
+                          {session.status === 'working' ? 'Working' : 'On Break'}
+                        </span>
+                      </td>
+                      <td data-label="Location Type" style={{ textTransform: 'capitalize' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          {session.session_type.replace('_', ' ')}
+                          {session.session_type !== 'office' && session.start_latitude && session.start_longitude && (
+                            <a 
+                              href={`https://www.google.com/maps?q=${session.start_latitude},${session.start_longitude}`} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              style={{ color: 'var(--admin-primary)', display: 'flex', alignItems: 'center' }}
+                              title="View Location on Map"
+                            >
+                              <MapPin size={14} />
+                            </a>
+                          )}
+                        </div>
+                      </td>
+                      <td data-label="Checked In At">{format(new Date(session.started_at), 'hh:mm a')}</td>
+                      <td data-label="Duration" style={{ fontWeight: '600' }}>{durationStr}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
