@@ -52,7 +52,9 @@ export default function AdminAttendance() {
             id,
             event_type,
             session_type,
-            timestamp
+            timestamp,
+            latitude,
+            longitude
           )
         `)
         .eq('date', targetDateStr);

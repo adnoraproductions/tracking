@@ -38,6 +38,8 @@ export default function EmployeeManager() {
     designation: ''
   });
 
+  const [activeSessions, setActiveSessions] = useState({});
+
   useEffect(() => {
     fetchEmployees();
   }, []);
@@ -52,11 +54,36 @@ export default function EmployeeManager() {
       
       if (error) throw error;
       setEmployees(data);
+
+      const { data: sessionData, error: sessionErr } = await supabase
+        .from('work_sessions')
+        .select('employee_id, status, started_at')
+        .in('status', ['working', 'on_break']);
+
+      if (!sessionErr && sessionData) {
+        const sessionMap = {};
+        sessionData.forEach(s => { sessionMap[s.employee_id] = s; });
+        setActiveSessions(sessionMap);
+      }
     } catch (err) {
       console.error(err);
       setError('Failed to load employees');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleForceEndSession = async (emp) => {
+    if (!window.confirm(`Are you sure you want to FORCE CHECKOUT ${emp.full_name}? This will instantly end their active shift.`)) return;
+    
+    try {
+      const { error } = await supabase.rpc('admin_force_end_session', { p_employee_id: emp.id });
+      if (error) throw error;
+      alert(`Successfully ended active session for ${emp.full_name}`);
+      await fetchEmployees();
+    } catch (err) {
+      console.error(err);
+      alert('Failed to force end session: ' + err.message);
     }
   };
 
@@ -386,9 +413,16 @@ export default function EmployeeManager() {
                       </td>
                       <td data-label="Designation">{emp.designation || '-'}</td>
                       <td data-label="Status">
-                        <span className={`admin-badge ${emp.status === 'inactive' ? 'gray' : 'green'}`}>
-                          {emp.status || 'active'}
-                        </span>
+                        {activeSessions[emp.id] ? (
+                          <span className="admin-badge green" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                            <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#10b981', display: 'inline-block' }}></span>
+                            WORKING
+                          </span>
+                        ) : (
+                          <span className={`admin-badge ${emp.status === 'inactive' ? 'gray' : 'green'}`}>
+                            {emp.status || 'active'}
+                          </span>
+                        )}
                       </td>
                       <td data-label="Role">
                         <span className={`admin-badge ${emp.role === 'admin' ? 'red' : 'gray'}`}>
@@ -398,6 +432,17 @@ export default function EmployeeManager() {
                       <td data-label="Joined">{emp.joined_date ? new Date(emp.joined_date).toLocaleDateString() : new Date(emp.created_at).toLocaleDateString()}</td>
                       <td data-label="Actions" style={{ textAlign: 'right' }}>
                         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '4px', position: 'relative', zIndex: 50 }}>
+                          {activeSessions[emp.id] && (
+                            <button 
+                              type="button"
+                              onClick={() => handleForceEndSession(emp)}
+                              className="admin-btn secondary"
+                              title="Force Check Out"
+                              style={{ padding: '6px', border: 'none', color: '#dc2626', pointerEvents: 'auto', backgroundColor: '#fee2e2' }}
+                            >
+                              <Power size={16} style={{ pointerEvents: 'none' }} />
+                            </button>
+                          )}
                           <button 
                             type="button"
                             onClick={() => handleToggleStatus(emp)}

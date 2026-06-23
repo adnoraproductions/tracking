@@ -29,6 +29,12 @@ export default function EmployeeDashboard() {
   const [liveTimer, setLiveTimer] = useState(0);
   const [workTargetHours, setWorkTargetHours] = useState(8); // default to 8
   
+  // Forgot Checkout Flow State
+  const [showForgotCheckoutModal, setShowForgotCheckoutModal] = useState(false);
+  const [forgotCheckoutData, setForgotCheckoutData] = useState(null);
+  const [forgotReason, setForgotReason] = useState('');
+  const [forgotLoading, setForgotLoading] = useState(false);
+  
   const isToday = format(selectedDate, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd');
 
   // Fetch data
@@ -155,6 +161,43 @@ export default function EmployeeDashboard() {
     if (profile) fetchData();
   }, [profile, selectedDate]);
 
+  const handleForgotCheckoutSubmit = async (e) => {
+    e.preventDefault();
+    if (!forgotReason) { alert("Please provide a reason."); return; }
+    
+    setForgotLoading(true);
+    try {
+      // 1. Check out normally
+      const { data, error } = await supabase.rpc('rpc_end_day', {
+        p_lat: forgotCheckoutData.geo.lat,
+        p_lng: forgotCheckoutData.geo.lng
+      });
+      if (error) throw error;
+      
+      // 2. Submit correction
+      const { error: correctionErr } = await supabase
+        .from('attendance_corrections')
+        .insert({
+          employee_id: profile.id,
+          attendance_day_id: sessionState.todayDayId,
+          work_session_id: sessionState.activeSession.id,
+          status: 'pending',
+          reason: `Forgot to checkout: ${forgotReason}` + (forgotCheckoutData.distance ? ` (Distance: ${Math.round(forgotCheckoutData.distance)}m)` : '')
+        });
+        
+      if (correctionErr) console.error("Failed to save correction:", correctionErr);
+      
+      setShowForgotCheckoutModal(false);
+      setForgotReason('');
+      await fetchData();
+    } catch (err) {
+      console.error(err);
+      alert('Failed to check out: ' + err.message);
+    } finally {
+      setForgotLoading(false);
+    }
+  };
+
   // Handle actions
   const handleAction = async (actionType) => {
     setActionLoading(true);
@@ -173,6 +216,25 @@ export default function EmployeeDashboard() {
          }
          
          geo = { lat: location.latitude, lng: location.longitude };
+      } else if (actionType === 'end' && sessionState.activeSession?.session_type === 'office') {
+         // Require location and validation for end of office session
+         try {
+           const { location, validation } = await getLocationAndValidate('office');
+           geo = { lat: location.latitude, lng: location.longitude };
+           
+           if (validation && !validation.isWithin) {
+              setForgotCheckoutData({ geo, distance: validation.distance });
+              setShowForgotCheckoutModal(true);
+              setActionLoading(false);
+              return; // Stop the standard checkout flow
+           }
+         } catch (geoErr) {
+            // Location fetch failed (timeout or no permission)
+            setForgotCheckoutData({ geo: { lat: 0, lng: 0 }, distance: null, error: geoErr.message });
+            setShowForgotCheckoutModal(true);
+            setActionLoading(false);
+            return;
+         }
       } else {
          // Generic location for other actions
          // If location fails or times out, we don't want to trap the user and prevent them from checking out.
@@ -444,6 +506,46 @@ export default function EmployeeDashboard() {
           )}
         </div>
       </div>
+
+      {/* Forgot Checkout Modal */}
+      {showForgotCheckoutModal && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1000,
+          display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '20px'
+        }}>
+          <div style={{
+            backgroundColor: '#fff', borderRadius: '24px', width: '100%', maxWidth: '400px', padding: '24px'
+          }}>
+            <h3 style={{ marginTop: 0, color: 'var(--emp-text-dark)' }}>Forgot to Check Out?</h3>
+            <p style={{ color: 'var(--emp-text-muted)', fontSize: '14px', marginBottom: '20px' }}>
+              You are outside the office. Please provide a reason to complete your checkout.
+            </p>
+            <textarea
+              style={{ width: '100%', padding: '12px', border: '1px solid var(--emp-border)', borderRadius: '12px', marginBottom: '16px', minHeight: '80px', fontFamily: 'inherit' }}
+              placeholder="e.g., Left at 5 PM but forgot to click"
+              value={forgotReason}
+              onChange={(e) => setForgotReason(e.target.value)}
+            />
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button 
+                style={{ flex: 1, padding: '12px', borderRadius: '12px', border: '1px solid var(--emp-border)', backgroundColor: '#fff', fontWeight: 'bold' }}
+                onClick={() => setShowForgotCheckoutModal(false)}
+                disabled={forgotLoading}
+              >
+                Cancel
+              </button>
+              <button 
+                style={{ flex: 1, padding: '12px', borderRadius: '12px', border: 'none', backgroundColor: 'var(--emp-primary)', color: 'white', fontWeight: 'bold', display: 'flex', justifyContent: 'center' }}
+                onClick={handleForgotCheckoutSubmit}
+                disabled={forgotLoading || !forgotReason}
+              >
+                {forgotLoading ? <Loader2 className="spinner" size={18} /> : 'Submit & Check Out'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

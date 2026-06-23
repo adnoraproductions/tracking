@@ -248,3 +248,56 @@ BEGIN
   WHERE id = p_attendance_day_id;
 END;
 $$;
+
+-- 6. ADMIN FORCE END SESSION
+CREATE OR REPLACE FUNCTION public.admin_force_end_session(p_employee_id UUID)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_is_admin BOOLEAN;
+  v_work_session_id UUID;
+  v_attendance_day_id UUID;
+  v_session_type public.session_type;
+BEGIN
+  -- Verify caller is admin
+  SELECT (role = 'admin') INTO v_is_admin FROM public.profiles WHERE id = auth.uid();
+  IF NOT v_is_admin THEN
+    RAISE EXCEPTION 'Unauthorized';
+  END IF;
+
+  -- 1. Find active session
+  SELECT id, attendance_day_id, session_type INTO v_work_session_id, v_attendance_day_id, v_session_type
+  FROM public.work_sessions
+  WHERE employee_id = p_employee_id AND status IN ('working', 'on_break')
+  LIMIT 1;
+
+  IF v_work_session_id IS NULL THEN
+    RAISE EXCEPTION 'No active session found for this employee.';
+  END IF;
+
+  -- 2. If on break, implicitly end the break first
+  UPDATE public.session_breaks
+  SET ended_at = NOW()
+  WHERE work_session_id = v_work_session_id AND ended_at IS NULL;
+
+  -- 3. End work session
+  UPDATE public.work_sessions
+  SET status = 'ended', ended_at = NOW()
+  WHERE id = v_work_session_id;
+
+  -- 4. Log immutable event (Admin Override)
+  INSERT INTO public.attendance_events (employee_id, attendance_day_id, event_type, session_type, timestamp)
+  VALUES (p_employee_id, v_attendance_day_id, 'session_ended', v_session_type, NOW());
+  
+  INSERT INTO public.attendance_events (employee_id, attendance_day_id, event_type, timestamp)
+  VALUES (p_employee_id, v_attendance_day_id, 'day_ended', NOW());
+
+  -- 5. Update totals
+  PERFORM public.rpc_update_day_totals(v_attendance_day_id);
+
+  RETURN jsonb_build_object('success', true, 'work_session_id', v_work_session_id);
+END;
+$$;
