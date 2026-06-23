@@ -150,7 +150,9 @@ export default function EmployeeManager() {
     setSettingsForm({
       custom_office_latitude: emp.custom_office_latitude || '',
       custom_office_longitude: emp.custom_office_longitude || '',
-      custom_office_radius: emp.custom_office_radius || ''
+      custom_office_radius: emp.custom_office_radius || '',
+      is_device_binding_enabled: emp.is_device_binding_enabled ?? true,
+      is_custom_geofence_enabled: emp.is_custom_geofence_enabled ?? false
     });
   };
 
@@ -163,7 +165,9 @@ export default function EmployeeManager() {
         .update({
           custom_office_latitude: settingsForm.custom_office_latitude ? parseFloat(settingsForm.custom_office_latitude) : null,
           custom_office_longitude: settingsForm.custom_office_longitude ? parseFloat(settingsForm.custom_office_longitude) : null,
-          custom_office_radius: settingsForm.custom_office_radius ? parseInt(settingsForm.custom_office_radius) : null
+          custom_office_radius: settingsForm.custom_office_radius ? parseInt(settingsForm.custom_office_radius) : null,
+          is_device_binding_enabled: settingsForm.is_device_binding_enabled,
+          is_custom_geofence_enabled: settingsForm.is_custom_geofence_enabled
         })
         .eq('id', settingsEmployee.id);
 
@@ -530,17 +534,41 @@ export default function EmployeeManager() {
               
               {/* Device Binding Section */}
               <div style={{ backgroundColor: '#f9fafb', padding: '16px', borderRadius: '12px', border: '1px solid var(--admin-border)' }}>
-                <h3 style={{ margin: '0 0 12px 0', fontSize: '15px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Smartphone size={16} color="var(--admin-text-dark)" />
-                  Device Binding
-                </h3>
-                {settingsEmployee.registered_device_id ? (
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
+                  <h3 style={{ margin: '0', fontSize: '15px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Smartphone size={16} color="var(--admin-text-dark)" />
+                    Device Binding
+                  </h3>
+                  
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                    <span style={{ fontSize: '13px', fontWeight: '500', color: settingsForm.is_device_binding_enabled ? 'var(--admin-primary)' : 'var(--admin-text-muted)' }}>
+                      {settingsForm.is_device_binding_enabled ? 'Enabled' : 'Disabled'}
+                    </span>
+                    <input type="checkbox" style={{ display: 'none' }} checked={settingsForm.is_device_binding_enabled} onChange={(e) => setSettingsForm({...settingsForm, is_device_binding_enabled: e.target.checked})} />
+                    <div style={{
+                      width: '40px', height: '24px', backgroundColor: settingsForm.is_device_binding_enabled ? 'var(--admin-primary)' : '#e5e7eb',
+                      borderRadius: '12px', position: 'relative', transition: 'background-color 0.2s'
+                    }}>
+                      <div style={{
+                        width: '18px', height: '18px', backgroundColor: 'white', borderRadius: '50%',
+                        position: 'absolute', top: '3px', left: settingsForm.is_device_binding_enabled ? '19px' : '3px',
+                        transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.2)'
+                      }} />
+                    </div>
+                  </label>
+                </div>
+
+                {!settingsForm.is_device_binding_enabled ? (
+                  <p style={{ margin: 0, fontSize: '13px', color: 'var(--admin-text-muted)' }}>
+                    Device binding is currently turned off. This employee can clock in from any device.
+                  </p>
+                ) : settingsEmployee.registered_device_id ? (
                   <div>
                     <p style={{ margin: '0 0 12px 0', fontSize: '13px', color: 'var(--admin-text-muted)' }}>
                       This employee is currently bound to a specific device. They cannot clock in from any other phone.
                     </p>
                     <button type="button" onClick={handleClearDeviceId} className="admin-btn secondary" style={{ color: '#ef4444', borderColor: '#ef4444', padding: '8px 16px', fontSize: '13px' }}>
-                      Clear Device Binding
+                      Clear Registered Device
                     </button>
                   </div>
                 ) : (
@@ -552,27 +580,63 @@ export default function EmployeeManager() {
 
               {/* Custom Geofence Section */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                <h3 style={{ margin: 0, fontSize: '15px' }}>Custom Office Geofence</h3>
-                <p style={{ margin: '-8px 0 0 0', fontSize: '12px', color: 'var(--admin-text-muted)' }}>
-                  Leave these blank to use the global company office settings. If filled, these coordinates will override the global settings for this employee only.
-                </p>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <h3 style={{ margin: 0, fontSize: '15px' }}>Custom Office Geofence</h3>
+                    <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: 'var(--admin-text-muted)' }}>
+                      Override global office coordinates for this employee.
+                    </p>
+                  </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                  <label style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13px', fontWeight: '500' }}>
-                    Custom Latitude
-                    <input type="number" step="any" placeholder="e.g. 34.0522" value={settingsForm.custom_office_latitude} onChange={(e) => setSettingsForm({...settingsForm, custom_office_latitude: e.target.value})} style={{ width: '100%', boxSizing: 'border-box', padding: '10px', borderRadius: '8px', border: '1px solid var(--admin-border)' }} />
-                  </label>
-
-                  <label style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13px', fontWeight: '500' }}>
-                    Custom Longitude
-                    <input type="number" step="any" placeholder="e.g. -118.2437" value={settingsForm.custom_office_longitude} onChange={(e) => setSettingsForm({...settingsForm, custom_office_longitude: e.target.value})} style={{ width: '100%', boxSizing: 'border-box', padding: '10px', borderRadius: '8px', border: '1px solid var(--admin-border)' }} />
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                    <span style={{ fontSize: '13px', fontWeight: '500', color: settingsForm.is_custom_geofence_enabled ? 'var(--admin-primary)' : 'var(--admin-text-muted)' }}>
+                      {settingsForm.is_custom_geofence_enabled ? 'Enabled' : 'Disabled'}
+                    </span>
+                    <input type="checkbox" style={{ display: 'none' }} checked={settingsForm.is_custom_geofence_enabled} onChange={(e) => setSettingsForm({...settingsForm, is_custom_geofence_enabled: e.target.checked})} />
+                    <div style={{
+                      width: '40px', height: '24px', backgroundColor: settingsForm.is_custom_geofence_enabled ? 'var(--admin-primary)' : '#e5e7eb',
+                      borderRadius: '12px', position: 'relative', transition: 'background-color 0.2s'
+                    }}>
+                      <div style={{
+                        width: '18px', height: '18px', backgroundColor: 'white', borderRadius: '50%',
+                        position: 'absolute', top: '3px', left: settingsForm.is_custom_geofence_enabled ? '19px' : '3px',
+                        transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.2)'
+                      }} />
+                    </div>
                   </label>
                 </div>
 
-                <label style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13px', fontWeight: '500' }}>
-                  Allowed Radius (Meters)
-                  <input type="number" placeholder="e.g. 100" value={settingsForm.custom_office_radius} onChange={(e) => setSettingsForm({...settingsForm, custom_office_radius: e.target.value})} style={{ width: '100%', boxSizing: 'border-box', padding: '10px', borderRadius: '8px', border: '1px solid var(--admin-border)' }} />
-                </label>
+                {settingsForm.is_custom_geofence_enabled && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', padding: '16px', backgroundColor: '#f9fafb', borderRadius: '12px', border: '1px solid var(--admin-border)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                      <button 
+                        type="button" 
+                        onClick={() => setSettingsForm({...settingsForm, custom_office_latitude: '', custom_office_longitude: '', custom_office_radius: ''})}
+                        className="admin-btn secondary" 
+                        style={{ padding: '6px 12px', fontSize: '12px', color: '#ef4444', borderColor: 'transparent', backgroundColor: 'transparent' }}
+                      >
+                        Reset Coordinates
+                      </button>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                      <label style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13px', fontWeight: '500' }}>
+                        Custom Latitude
+                        <input type="number" step="any" placeholder="e.g. 34.0522" value={settingsForm.custom_office_latitude} onChange={(e) => setSettingsForm({...settingsForm, custom_office_latitude: e.target.value})} style={{ width: '100%', boxSizing: 'border-box', padding: '10px', borderRadius: '8px', border: '1px solid var(--admin-border)' }} />
+                      </label>
+
+                      <label style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13px', fontWeight: '500' }}>
+                        Custom Longitude
+                        <input type="number" step="any" placeholder="e.g. -118.2437" value={settingsForm.custom_office_longitude} onChange={(e) => setSettingsForm({...settingsForm, custom_office_longitude: e.target.value})} style={{ width: '100%', boxSizing: 'border-box', padding: '10px', borderRadius: '8px', border: '1px solid var(--admin-border)' }} />
+                      </label>
+                    </div>
+
+                    <label style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13px', fontWeight: '500' }}>
+                      Allowed Radius (Meters)
+                      <input type="number" placeholder="e.g. 100" value={settingsForm.custom_office_radius} onChange={(e) => setSettingsForm({...settingsForm, custom_office_radius: e.target.value})} style={{ width: '100%', boxSizing: 'border-box', padding: '10px', borderRadius: '8px', border: '1px solid var(--admin-border)' }} />
+                    </label>
+                  </div>
+                )}
               </div>
 
               <div style={{ marginTop: '8px', display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>

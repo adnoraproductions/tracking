@@ -56,11 +56,11 @@ export function useGeolocation() {
     if (user) {
       const { data: profile } = await supabase
         .from('profiles')
-        .select('custom_office_latitude, custom_office_longitude, custom_office_radius')
+        .select('custom_office_latitude, custom_office_longitude, custom_office_radius, is_custom_geofence_enabled')
         .eq('id', user.id)
         .single();
         
-      if (profile && profile.custom_office_latitude && profile.custom_office_longitude) {
+      if (profile && profile.is_custom_geofence_enabled && profile.custom_office_latitude && profile.custom_office_longitude) {
         const radius = profile.custom_office_radius || 100;
         const distance = calculateDistance(latitude, longitude, profile.custom_office_latitude, profile.custom_office_longitude);
         const isWithin = distance <= radius;

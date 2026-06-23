@@ -56,15 +56,19 @@ export default function EmployeeDashboard() {
       }
 
       let isDeviceValid = true;
-      if (!profile.registered_device_id) {
-        // Auto-bind on first login
-        const { error: bindErr } = await supabase
-          .from('profiles')
-          .update({ registered_device_id: localDeviceId })
-          .eq('id', profile.id);
-        if (bindErr) console.error("Could not bind device", bindErr);
-      } else if (profile.registered_device_id !== localDeviceId) {
-        isDeviceValid = false;
+      const deviceBindingEnabled = profile.is_device_binding_enabled ?? true;
+
+      if (deviceBindingEnabled) {
+        if (!profile.registered_device_id) {
+          // Auto-bind on first login
+          const { error: bindErr } = await supabase
+            .from('profiles')
+            .update({ registered_device_id: localDeviceId })
+            .eq('id', profile.id);
+          if (bindErr) console.error("Could not bind device", bindErr);
+        } else if (profile.registered_device_id !== localDeviceId) {
+          isDeviceValid = false;
+        }
       }
       setDeviceValid(isDeviceValid);
 
