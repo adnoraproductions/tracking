@@ -168,9 +168,11 @@ body {
   transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.admin-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 30px rgba(0,0,0,0.06);
+@media (hover: hover) {
+  .admin-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.06);
+  }
 }
 
 .admin-card h2 {
@@ -236,8 +238,10 @@ body {
   border-bottom: none;
 }
 
-.admin-table tbody tr:hover {
-  background-color: rgba(255,255,255,0.4);
+@media (hover: hover) {
+  .admin-table tbody tr:hover {
+    background-color: rgba(255,255,255,0.4);
+  }
 }
 
 /* Buttons */
@@ -259,9 +263,11 @@ body {
   color: white;
 }
 
-.admin-btn.primary:hover {
-  background-color: #047857;
-  transform: scale(1.02);
+@media (hover: hover) {
+  .admin-btn.primary:hover {
+    background-color: #047857;
+    transform: scale(1.02);
+  }
 }
 .admin-btn.primary:active {
   transform: scale(0.98);
@@ -273,9 +279,11 @@ body {
   color: var(--admin-text-dark);
 }
 
-.admin-btn.secondary:hover {
-  background-color: #f9fafb;
-  transform: scale(1.02);
+@media (hover: hover) {
+  .admin-btn.secondary:hover {
+    background-color: #f9fafb;
+    transform: scale(1.02);
+  }
 }
 .admin-btn.secondary:active {
   transform: scale(0.98);
@@ -349,8 +357,10 @@ body {
   transition: background-color 0.2s;
 }
 
-.admin-mobile-logout:hover {
-  background-color: #fef2f2;
+@media (hover: hover) {
+  .admin-mobile-logout:hover {
+    background-color: #fef2f2;
+  }
 }
 
 /* Responsive Mobile Layout for Admin */

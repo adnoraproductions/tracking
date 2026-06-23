@@ -395,36 +395,40 @@ export default function EmployeeManager() {
                       <td data-label="Actions" style={{ textAlign: 'right' }}>
                         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '4px' }}>
                           <button 
+                            type="button"
                             onClick={() => handleToggleStatus(emp)}
                             className="admin-btn secondary"
                             title={emp.status === 'inactive' ? "Activate Account" : "Deactivate Account"}
-                            style={{ padding: '6px', border: 'none', color: emp.status === 'inactive' ? '#16a34a' : '#ea580c' }}
+                            style={{ padding: '6px', border: 'none', color: emp.status === 'inactive' ? '#16a34a' : '#ea580c', pointerEvents: 'auto' }}
                           >
-                            <Power size={16} />
+                            <Power size={16} style={{ pointerEvents: 'none' }} />
                           </button>
                           <button 
+                            type="button"
                             onClick={() => handleEditClick(emp)}
                             className="admin-btn secondary"
                             title="Edit Employee"
-                            style={{ padding: '6px', border: 'none', color: 'var(--admin-primary)' }}
+                            style={{ padding: '6px', border: 'none', color: 'var(--admin-primary)', pointerEvents: 'auto' }}
                           >
-                            <Edit2 size={16} />
+                            <Edit2 size={16} style={{ pointerEvents: 'none' }} />
                           </button>
                           <button 
+                            type="button"
                             onClick={() => handleOpenSettings(emp)}
                             className="admin-btn secondary"
                             title="Advanced Settings"
-                            style={{ padding: '6px', border: 'none', color: 'var(--admin-text-dark)' }}
+                            style={{ padding: '6px', border: 'none', color: 'var(--admin-text-dark)', pointerEvents: 'auto' }}
                           >
-                            <Settings size={16} />
+                            <Settings size={16} style={{ pointerEvents: 'none' }} />
                           </button>
                           <button 
+                            type="button"
                             onClick={() => handleDeleteEmployee(emp)}
                             className="admin-btn secondary"
                             title="Delete Employee"
-                            style={{ padding: '6px', border: 'none', color: '#ef4444' }}
+                            style={{ padding: '6px', border: 'none', color: '#ef4444', pointerEvents: 'auto' }}
                           >
-                            <Trash2 size={16} />
+                            <Trash2 size={16} style={{ pointerEvents: 'none' }} />
                           </button>
                         </div>
                       </td>
