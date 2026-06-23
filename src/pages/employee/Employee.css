@@ -23,10 +23,10 @@ body {
 .emp-layout {
   max-width: 480px;
   margin: 0 auto;
-  min-height: 100vh;
+  min-height: 100dvh;
   background-color: transparent;
   position: relative;
-  padding-bottom: 120px; /* Space for bottom nav */
+  padding-bottom: calc(140px + env(safe-area-inset-bottom));
   overflow-x: hidden;
 }
 
@@ -395,7 +395,7 @@ body {
 /* Bottom Nav */
 .emp-bottom-nav {
   position: fixed;
-  bottom: 24px;
+  bottom: calc(24px + env(safe-area-inset-bottom));
   left: 24px;
   right: 24px;
   background-color: rgba(255, 255, 255, 0.92);
