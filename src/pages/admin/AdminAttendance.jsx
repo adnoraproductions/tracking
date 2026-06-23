@@ -101,10 +101,13 @@ export default function AdminAttendance() {
       
       if (profilesError) throw profilesError;
 
-      // 2. Fetch attendance_days for the month
+      // 2. Fetch attendance_days for the month with nested work_sessions
       const { data: attendanceData, error: attendanceError } = await supabase
         .from('attendance_days')
-        .select('employee_id, date, status, total_work_minutes, total_break_minutes')
+        .select(`
+          employee_id, date, status, total_work_minutes, total_break_minutes,
+          work_sessions ( started_at, ended_at )
+        `)
         .gte('date', startDateStr)
         .lte('date', endDateStr);
 
@@ -132,19 +135,47 @@ export default function AdminAttendance() {
           let totalBreak = 0;
 
           const dailyData = daysHeaders.map(dayNum => {
-            const dayStr = format(new Date(exportYear, exportMonth - 1, dayNum), 'yyyy-MM-dd');
+            const dateObj = new Date(exportYear, exportMonth - 1, dayNum);
+            const isSunday = dateObj.getDay() === 0;
+            const dayStr = format(dateObj, 'yyyy-MM-dd');
             const log = empLogs.find(l => l.date === dayStr);
             
-            if (!log) return '"-"';
+            if (!log) {
+              return isSunday ? '"SUNDAY"' : '"-"';
+            }
+
+            let cellContent = [];
+            if (isSunday) cellContent.push("SUNDAY");
 
             if (log.status === 'absent') {
               absentCount++;
-              return '"Absent"';
+              cellContent.push("Absent");
+              return `"${cellContent.join('\n')}"`;
             } else {
               presentCount++; // counts present, late, field_work, half_day
               totalWork += (log.total_work_minutes || 0);
               totalBreak += (log.total_break_minutes || 0);
-              return `"${formatDurationMins(log.total_work_minutes || 0)}"`;
+              
+              const sessions = log.work_sessions || [];
+              if (sessions.length > 0) {
+                const starts = sessions.map(s => new Date(s.started_at).getTime());
+                const ends = sessions.filter(s => s.ended_at).map(s => new Date(s.ended_at).getTime());
+                
+                const firstIn = new Date(Math.min(...starts));
+                cellContent.push(`In: ${format(firstIn, 'hh:mm a')}`);
+                
+                if (ends.length > 0) {
+                  const lastOut = new Date(Math.max(...ends));
+                  cellContent.push(`Out: ${format(lastOut, 'hh:mm a')}`);
+                } else {
+                  cellContent.push(`Out: --`);
+                }
+              }
+
+              cellContent.push(`W: ${formatDurationMins(log.total_work_minutes || 0)}`);
+              cellContent.push(`B: ${formatDurationMins(log.total_break_minutes || 0)}`);
+              
+              return `"${cellContent.join('\n')}"`;
             }
           });
 
