@@ -19,6 +19,7 @@ export default function EmployeeDashboard() {
   const [sessionState, setSessionState] = useState({
     activeSession: null,
     events: [],
+    sessions: [],
     todayDayId: null,
     todayTotalWorkMinutes: 0
   });
@@ -88,16 +89,29 @@ export default function EmployeeDashboard() {
         totalMins = days[0].total_work_minutes || 0;
       }
       
-      // 2. Get active work_session (if any)
-      const { data: sessions, error: sessErr } = await supabase
-        .from('work_sessions')
-        .select('*')
-        .eq('employee_id', profile.id)
-        .in('status', ['working', 'on_break']);
-        
-      if (sessErr) throw sessErr;
-      
-      const activeSession = sessions && sessions.length > 0 ? sessions[0] : null;
+      // 2. Get all work_sessions for today (with breaks) for accurate second-level timer
+      let sessions = [];
+      let activeSession = null;
+      if (dayId) {
+        const { data: sessData, error: sessErr } = await supabase
+          .from('work_sessions')
+          .select('*, session_breaks(*)')
+          .eq('attendance_day_id', dayId);
+          
+        if (sessErr) throw sessErr;
+        sessions = sessData || [];
+        activeSession = sessions.find(s => s.status === 'working' || s.status === 'on_break') || null;
+      } else {
+        const { data: sessData, error: sessErr } = await supabase
+          .from('work_sessions')
+          .select('*, session_breaks(*)')
+          .eq('employee_id', profile.id)
+          .in('status', ['working', 'on_break']);
+        if (!sessErr && sessData && sessData.length > 0) {
+          activeSession = sessData[0];
+          sessions = sessData;
+        }
+      }
 
       // 3. Get all events for today (to build log)
       let events = [];
@@ -115,6 +129,7 @@ export default function EmployeeDashboard() {
       setSessionState({
         activeSession,
         events,
+        sessions,
         todayDayId: dayId,
         todayTotalWorkMinutes: totalMins
       });
@@ -208,20 +223,12 @@ export default function EmployeeDashboard() {
     }
   }
 
-  // Calculate live timer (very basic implementation for UI purposes)
+  const [now, setNow] = useState(new Date());
+
   useEffect(() => {
-    let interval;
-    if (sessionState.activeSession && sessionState.activeSession.status === 'working') {
-      interval = setInterval(() => {
-        const start = new Date(sessionState.activeSession.started_at);
-        const diff = differenceInSeconds(new Date(), start);
-        setLiveTimer(diff);
-      }, 1000);
-    } else {
-      setLiveTimer(0);
-    }
+    const interval = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(interval);
-  }, [sessionState.activeSession]);
+  }, []);
 
   const formatTimer = (totalSeconds) => {
     const h = Math.floor(totalSeconds / 3600).toString().padStart(2, '0');
@@ -230,8 +237,31 @@ export default function EmployeeDashboard() {
     return `${h}:${m}:${s}`;
   };
 
-  // Target calculation
-  const totalWorkedSeconds = (sessionState.todayTotalWorkMinutes * 60) + (isToday ? liveTimer : 0);
+  // Calculate total accurate worked seconds
+  let totalWorkedSeconds = 0;
+  if (sessionState.sessions) {
+    sessionState.sessions.forEach(s => {
+      const end = s.ended_at ? new Date(s.ended_at) : now;
+      let sessionSecs = differenceInSeconds(end, new Date(s.started_at));
+      
+      if (s.session_breaks && s.session_breaks.length > 0) {
+        s.session_breaks.forEach(b => {
+          const bEnd = b.ended_at ? new Date(b.ended_at) : now;
+          sessionSecs -= differenceInSeconds(bEnd, new Date(b.started_at));
+        });
+      }
+      
+      if (sessionSecs > 0) {
+        totalWorkedSeconds += sessionSecs;
+      }
+    });
+  }
+
+  // If viewing a past day, use exactly the static sessions data
+  if (!isToday && sessionState.sessions.length === 0) {
+    totalWorkedSeconds = sessionState.todayTotalWorkMinutes * 60;
+  }
+
   const targetSeconds = workTargetHours * 3600;
   const targetComplete = totalWorkedSeconds >= targetSeconds;
   
