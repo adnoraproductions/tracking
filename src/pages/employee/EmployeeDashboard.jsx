@@ -14,6 +14,7 @@ export default function EmployeeDashboard() {
   const [initialLoad, setInitialLoad] = useState(true);
   const [error, setError] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
+  const [deviceValid, setDeviceValid] = useState(true);
   
   const [sessionState, setSessionState] = useState({
     activeSession: null,
@@ -46,6 +47,26 @@ export default function EmployeeDashboard() {
       if (!settingsErr && settings) {
         setWorkTargetHours(settings.work_target_hours || 8);
       }
+
+      // 0.5 Device Binding Check
+      let localDeviceId = localStorage.getItem('device_id');
+      if (!localDeviceId) {
+        localDeviceId = crypto.randomUUID();
+        localStorage.setItem('device_id', localDeviceId);
+      }
+
+      let isDeviceValid = true;
+      if (!profile.registered_device_id) {
+        // Auto-bind on first login
+        const { error: bindErr } = await supabase
+          .from('profiles')
+          .update({ registered_device_id: localDeviceId })
+          .eq('id', profile.id);
+        if (bindErr) console.error("Could not bind device", bindErr);
+      } else if (profile.registered_device_id !== localDeviceId) {
+        isDeviceValid = false;
+      }
+      setDeviceValid(isDeviceValid);
 
       // 1. Get today's attendance_day
       const { data: days, error: dayErr } = await supabase
@@ -330,35 +351,42 @@ export default function EmployeeDashboard() {
           </div>
           {/* Action Buttons (Only show if viewing Today) */}
           {isToday && (
-            <div className="emp-action-grid">
-              {!sessionState.activeSession ? (
-                <>
-                  <button className="emp-btn-square" onClick={() => handleAction('start_office')} disabled={actionLoading}>
-                    <div style={{ backgroundColor: '#d1fae5', padding: '8px', borderRadius: '50%', color: 'var(--emp-primary)' }}><Briefcase size={20} /></div>
-                    Office
-                  </button>
-                  <button className="emp-btn-square" onClick={() => handleAction('start_wfh')} disabled={actionLoading}>
-                    <div style={{ backgroundColor: '#e0e7ff', padding: '8px', borderRadius: '50%', color: '#4f46e5' }}><Home size={20} /></div>
-                    WFH
-                  </button>
-                  <button className="emp-btn-square" onClick={() => handleAction('start_field_work')} disabled={actionLoading}>
-                    <div style={{ backgroundColor: '#fef3c7', padding: '8px', borderRadius: '50%', color: '#d97706' }}><MapPin size={20} /></div>
-                    Field
-                  </button>
-                </>
-              ) : (
-                <>
-                  <button className="emp-btn-square danger" onClick={() => handleAction('end')} disabled={actionLoading}>
-                     <div style={{ backgroundColor: '#fef2f2', padding: '8px', borderRadius: '50%', color: 'var(--emp-danger)' }}><Clock size={20} /></div>
-                     Check Out
-                  </button>
-                  <button className={`emp-btn-square ${sessionState.activeSession.status === 'on_break' ? 'active' : ''}`} onClick={() => handleAction(sessionState.activeSession.status === 'on_break' ? 'break_in' : 'break_out')} disabled={actionLoading}>
-                     <div style={{ backgroundColor: sessionState.activeSession.status === 'on_break' ? 'rgba(255,255,255,0.2)' : '#fef3c7', padding: '8px', borderRadius: '50%', color: sessionState.activeSession.status === 'on_break' ? 'white' : '#f59e0b' }}><Clock size={20} /></div>
-                     {sessionState.activeSession.status === 'on_break' ? 'Resume Work' : 'Take Break'}
-                  </button>
-                </>
-              )}
-            </div>
+            deviceValid ? (
+              <div className="emp-action-grid">
+                {!sessionState.activeSession ? (
+                  <>
+                    <button className="emp-btn-square" onClick={() => handleAction('start_office')} disabled={actionLoading}>
+                      <div style={{ backgroundColor: '#d1fae5', padding: '8px', borderRadius: '50%', color: 'var(--emp-primary)' }}><Briefcase size={20} /></div>
+                      Office
+                    </button>
+                    <button className="emp-btn-square" onClick={() => handleAction('start_wfh')} disabled={actionLoading}>
+                      <div style={{ backgroundColor: '#e0e7ff', padding: '8px', borderRadius: '50%', color: '#4f46e5' }}><Home size={20} /></div>
+                      WFH
+                    </button>
+                    <button className="emp-btn-square" onClick={() => handleAction('start_field_work')} disabled={actionLoading}>
+                      <div style={{ backgroundColor: '#fef3c7', padding: '8px', borderRadius: '50%', color: '#d97706' }}><MapPin size={20} /></div>
+                      Field
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button className="emp-btn-square danger" onClick={() => handleAction('end')} disabled={actionLoading}>
+                       <div style={{ backgroundColor: '#fef2f2', padding: '8px', borderRadius: '50%', color: 'var(--emp-danger)' }}><Clock size={20} /></div>
+                       Check Out
+                    </button>
+                    <button className={`emp-btn-square ${sessionState.activeSession.status === 'on_break' ? 'active' : ''}`} onClick={() => handleAction(sessionState.activeSession.status === 'on_break' ? 'break_in' : 'break_out')} disabled={actionLoading}>
+                       <div style={{ backgroundColor: sessionState.activeSession.status === 'on_break' ? 'rgba(255,255,255,0.2)' : '#fef3c7', padding: '8px', borderRadius: '50%', color: sessionState.activeSession.status === 'on_break' ? 'white' : '#f59e0b' }}><Clock size={20} /></div>
+                       {sessionState.activeSession.status === 'on_break' ? 'Resume Work' : 'Take Break'}
+                    </button>
+                  </>
+                )}
+              </div>
+            ) : (
+              <div style={{ backgroundColor: '#fef2f2', color: '#ef4444', padding: '16px', borderRadius: '12px', fontSize: '14px', textAlign: 'center', border: '1px solid #fca5a5' }}>
+                <p style={{ fontWeight: 'bold', margin: '0 0 8px 0' }}>Unauthorized Device</p>
+                This account is bound to another device. You cannot clock in from this phone.
+              </div>
+            )
           )}
 
           {error && (

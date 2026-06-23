@@ -51,7 +51,24 @@ export function useGeolocation() {
   };
 
   const validateOfficeGeofence = async (latitude, longitude) => {
-    // Fetch active office
+    // 1. Check for employee-specific custom office override
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('custom_office_latitude, custom_office_longitude, custom_office_radius')
+        .eq('id', user.id)
+        .single();
+        
+      if (profile && profile.custom_office_latitude && profile.custom_office_longitude) {
+        const radius = profile.custom_office_radius || 100;
+        const distance = calculateDistance(latitude, longitude, profile.custom_office_latitude, profile.custom_office_longitude);
+        const isWithin = distance <= radius;
+        return { isWithin, office: { name: 'Custom Employee Location' }, distance };
+      }
+    }
+
+    // 2. Fallback to global active office
     const { data: office, error: dbError } = await supabase
       .from('office_settings')
       .select('*')

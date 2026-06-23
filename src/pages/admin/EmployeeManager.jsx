@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase/client';
 import { createClient } from '@supabase/supabase-js';
-import { Loader2, Edit2, X, Plus, UserPlus, Trash2, Power } from 'lucide-react';
+import { Loader2, Edit2, X, Plus, UserPlus, Trash2, Power, Settings, Smartphone } from 'lucide-react';
 
 // Create a secondary client specifically for signing up users so it doesn't overwrite the admin's session
 const adminAuthClient = createClient(
@@ -17,6 +17,15 @@ export default function EmployeeManager() {
   
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({ full_name: '', employee_code: '', role: 'employee', designation: '', joined_date: '', new_password: '' });
+
+  // Settings Modal State
+  const [settingsEmployee, setSettingsEmployee] = useState(null);
+  const [settingsForm, setSettingsForm] = useState({
+    custom_office_latitude: '',
+    custom_office_longitude: '',
+    custom_office_radius: ''
+  });
+  const [settingsLoading, setSettingsLoading] = useState(false);
 
   // Add Employee Modal State
   const [showAddModal, setShowAddModal] = useState(false);
@@ -133,6 +142,57 @@ export default function EmployeeManager() {
     } catch (err) {
       console.error(err);
       alert('Failed to delete employee: ' + err.message);
+    }
+  };
+
+  const handleOpenSettings = (emp) => {
+    setSettingsEmployee(emp);
+    setSettingsForm({
+      custom_office_latitude: emp.custom_office_latitude || '',
+      custom_office_longitude: emp.custom_office_longitude || '',
+      custom_office_radius: emp.custom_office_radius || ''
+    });
+  };
+
+  const handleSaveSettings = async (e) => {
+    e.preventDefault();
+    setSettingsLoading(true);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          custom_office_latitude: settingsForm.custom_office_latitude ? parseFloat(settingsForm.custom_office_latitude) : null,
+          custom_office_longitude: settingsForm.custom_office_longitude ? parseFloat(settingsForm.custom_office_longitude) : null,
+          custom_office_radius: settingsForm.custom_office_radius ? parseInt(settingsForm.custom_office_radius) : null
+        })
+        .eq('id', settingsEmployee.id);
+
+      if (error) throw error;
+      await fetchEmployees();
+      setSettingsEmployee(null);
+    } catch (err) {
+      console.error(err);
+      alert('Failed to update settings: ' + err.message);
+    } finally {
+      setSettingsLoading(false);
+    }
+  };
+
+  const handleClearDeviceId = async () => {
+    if (!window.confirm("Are you sure you want to clear this employee's registered device? They will be bound to the next device they use to clock in.")) return;
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ registered_device_id: null })
+        .eq('id', settingsEmployee.id);
+      
+      if (error) throw error;
+      alert("Device ID cleared successfully.");
+      setSettingsEmployee(prev => ({...prev, registered_device_id: null}));
+      fetchEmployees();
+    } catch (err) {
+      console.error(err);
+      alert('Failed to clear device id: ' + err.message);
     }
   };
 
@@ -351,6 +411,14 @@ export default function EmployeeManager() {
                             <Edit2 size={16} />
                           </button>
                           <button 
+                            onClick={() => handleOpenSettings(emp)}
+                            className="admin-btn secondary"
+                            title="Advanced Settings"
+                            style={{ padding: '6px', border: 'none', color: 'var(--admin-text-dark)' }}
+                          >
+                            <Settings size={16} />
+                          </button>
+                          <button 
                             onClick={() => handleDeleteEmployee(emp)}
                             className="admin-btn secondary"
                             title="Delete Employee"
@@ -432,6 +500,89 @@ export default function EmployeeManager() {
           </div>
         </div>
       )}
+
+      {/* Advanced Settings Modal */}
+      {settingsEmployee && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1000,
+          display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '20px'
+        }}>
+          <div style={{
+            backgroundColor: 'var(--admin-card-bg)', borderRadius: '24px',
+            width: '100%', maxWidth: '500px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)'
+          }}>
+            <div style={{ padding: '24px', borderBottom: '1px solid var(--admin-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h2 style={{ margin: 0, fontSize: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Settings size={20} color="var(--admin-primary)" />
+                Advanced Settings for {settingsEmployee.full_name}
+              </h2>
+              <button onClick={() => setSettingsEmployee(null)} style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}>
+                <X size={24} color="var(--admin-text-muted)" />
+              </button>
+            </div>
+            
+            <form onSubmit={handleSaveSettings} style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+              
+              {/* Device Binding Section */}
+              <div style={{ backgroundColor: '#f9fafb', padding: '16px', borderRadius: '12px', border: '1px solid var(--admin-border)' }}>
+                <h3 style={{ margin: '0 0 12px 0', fontSize: '15px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Smartphone size={16} color="var(--admin-text-dark)" />
+                  Device Binding
+                </h3>
+                {settingsEmployee.registered_device_id ? (
+                  <div>
+                    <p style={{ margin: '0 0 12px 0', fontSize: '13px', color: 'var(--admin-text-muted)' }}>
+                      This employee is currently bound to a specific device. They cannot clock in from any other phone.
+                    </p>
+                    <button type="button" onClick={handleClearDeviceId} className="admin-btn secondary" style={{ color: '#ef4444', borderColor: '#ef4444', padding: '8px 16px', fontSize: '13px' }}>
+                      Clear Device Binding
+                    </button>
+                  </div>
+                ) : (
+                  <p style={{ margin: 0, fontSize: '13px', color: 'var(--admin-text-muted)' }}>
+                    No device bound yet. The first device they use to clock in will be permanently bound to their account.
+                  </p>
+                )}
+              </div>
+
+              {/* Custom Geofence Section */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <h3 style={{ margin: 0, fontSize: '15px' }}>Custom Office Geofence</h3>
+                <p style={{ margin: '-8px 0 0 0', fontSize: '12px', color: 'var(--admin-text-muted)' }}>
+                  Leave these blank to use the global company office settings. If filled, these coordinates will override the global settings for this employee only.
+                </p>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                  <label style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13px', fontWeight: '500' }}>
+                    Custom Latitude
+                    <input type="number" step="any" placeholder="e.g. 34.0522" value={settingsForm.custom_office_latitude} onChange={(e) => setSettingsForm({...settingsForm, custom_office_latitude: e.target.value})} style={{ width: '100%', boxSizing: 'border-box', padding: '10px', borderRadius: '8px', border: '1px solid var(--admin-border)' }} />
+                  </label>
+
+                  <label style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13px', fontWeight: '500' }}>
+                    Custom Longitude
+                    <input type="number" step="any" placeholder="e.g. -118.2437" value={settingsForm.custom_office_longitude} onChange={(e) => setSettingsForm({...settingsForm, custom_office_longitude: e.target.value})} style={{ width: '100%', boxSizing: 'border-box', padding: '10px', borderRadius: '8px', border: '1px solid var(--admin-border)' }} />
+                  </label>
+                </div>
+
+                <label style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13px', fontWeight: '500' }}>
+                  Allowed Radius (Meters)
+                  <input type="number" placeholder="e.g. 100" value={settingsForm.custom_office_radius} onChange={(e) => setSettingsForm({...settingsForm, custom_office_radius: e.target.value})} style={{ width: '100%', boxSizing: 'border-box', padding: '10px', borderRadius: '8px', border: '1px solid var(--admin-border)' }} />
+                </label>
+              </div>
+
+              <div style={{ marginTop: '8px', display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+                <button type="button" className="admin-btn secondary" onClick={() => setSettingsEmployee(null)}>Close</button>
+                <button type="submit" className="admin-btn primary" disabled={settingsLoading}>
+                  {settingsLoading ? <Loader2 className="spinner" size={16} /> : 'Save Settings'}
+                </button>
+              </div>
+
+            </form>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
