@@ -5,6 +5,7 @@ import { format, differenceInMinutes } from 'date-fns';
 
 export default function AdminDashboard() {
   const [activeSessions, setActiveSessions] = useState([]);
+  const [pendingRequests, setPendingRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -37,11 +38,43 @@ export default function AdminDashboard() {
 
       if (error) throw error;
       setActiveSessions(data || []);
+
+      const { data: correctionsData, error: correctionsError } = await supabase
+        .from('attendance_corrections')
+        .select(`
+          id,
+          reason,
+          created_at,
+          profiles (
+            full_name,
+            employee_code
+          )
+        `)
+        .eq('status', 'pending')
+        .order('created_at', { ascending: false });
+
+      if (correctionsError) throw correctionsError;
+      setPendingRequests(correctionsData || []);
+
     } catch (err) {
       console.error(err);
       setError('Failed to fetch live data');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResolveRequest = async (id) => {
+    try {
+      const { error } = await supabase
+        .from('attendance_corrections')
+        .update({ status: 'resolved' })
+        .eq('id', id);
+      if (error) throw error;
+      fetchLiveData();
+    } catch (err) {
+      console.error(err);
+      alert('Failed to resolve request.');
     }
   };
 
@@ -162,6 +195,54 @@ export default function AdminDashboard() {
           </div>
         )}
       </div>
+
+      {/* Pending Requests Table */}
+      {pendingRequests.length > 0 && (
+        <div className="admin-card">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '24px' }}>
+            <AlertCircle color="#ea580c" />
+            <h2 style={{ margin: 0 }}>Pending Check-In/Out Overrides</h2>
+          </div>
+          
+          <div className="admin-table-container">
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>Employee</th>
+                  <th>Request Reason</th>
+                  <th>Submitted At</th>
+                  <th style={{ textAlign: 'right' }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {pendingRequests.map(req => (
+                  <tr key={req.id}>
+                    <td data-label="Employee">
+                      <div style={{ fontWeight: '600' }}>{req.profiles?.full_name || 'Unknown'}</div>
+                      <div style={{ fontSize: '12px', color: 'var(--admin-text-muted)' }}>{req.profiles?.employee_code || '-'}</div>
+                    </td>
+                    <td data-label="Request Reason" style={{ maxWidth: '400px', whiteSpace: 'normal', lineHeight: '1.4' }}>
+                      {req.reason}
+                    </td>
+                    <td data-label="Submitted At">
+                      {format(new Date(req.created_at), 'MMM dd, yyyy hh:mm a')}
+                    </td>
+                    <td data-label="Actions" style={{ textAlign: 'right' }}>
+                      <button 
+                        onClick={() => handleResolveRequest(req.id)}
+                        className="admin-btn primary"
+                        style={{ padding: '6px 12px', fontSize: '12px', backgroundColor: '#10b981' }}
+                      >
+                        Mark Resolved
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

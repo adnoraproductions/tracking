@@ -34,6 +34,12 @@ export default function EmployeeDashboard() {
   const [forgotCheckoutData, setForgotCheckoutData] = useState(null);
   const [forgotReason, setForgotReason] = useState('');
   const [forgotLoading, setForgotLoading] = useState(false);
+
+  // Forgot Check In Flow State
+  const [showForgotCheckInModal, setShowForgotCheckInModal] = useState(false);
+  const [forgotCheckInData, setForgotCheckInData] = useState(null);
+  const [forgotCheckInReason, setForgotCheckInReason] = useState('');
+  const [forgotCheckInLoading, setForgotCheckInLoading] = useState(false);
   
   const isToday = format(selectedDate, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd');
 
@@ -198,6 +204,48 @@ export default function EmployeeDashboard() {
     }
   };
 
+  const handleForgotCheckInSubmit = async (e) => {
+    e.preventDefault();
+    if (!forgotCheckInReason) { alert("Please provide a reason."); return; }
+    
+    setForgotCheckInLoading(true);
+    try {
+      // 1. Check in normally, pass actual location for admin reference
+      const { data, error } = await supabase.rpc('rpc_start_session', {
+        p_session_type: 'office',
+        p_lat: forgotCheckInData.geo.lat,
+        p_lng: forgotCheckInData.geo.lng
+      });
+      if (error) throw error;
+      if (data && data.success === false) throw new Error(data.message);
+      
+      const workSessionId = data.work_session_id;
+      const dayId = data.attendance_day_id;
+      
+      // 2. Submit correction
+      const { error: correctionErr } = await supabase
+        .from('attendance_corrections')
+        .insert({
+          employee_id: profile.id,
+          attendance_day_id: dayId,
+          work_session_id: workSessionId,
+          status: 'pending',
+          reason: `Forgot to Check In (Office): ${forgotCheckInReason}` + (forgotCheckInData.distance ? ` (Distance: ${Math.round(forgotCheckInData.distance)}m)` : '')
+        });
+        
+      if (correctionErr) console.error("Failed to save correction:", correctionErr);
+      
+      setShowForgotCheckInModal(false);
+      setForgotCheckInReason('');
+      await fetchData();
+    } catch (err) {
+      console.error(err);
+      alert('Failed to check in: ' + err.message);
+    } finally {
+      setForgotCheckInLoading(false);
+    }
+  };
+
   // Handle actions
   const handleAction = async (actionType) => {
     setActionLoading(true);
@@ -209,13 +257,28 @@ export default function EmployeeDashboard() {
       // Request location based on action
       if (actionType.startsWith('start_')) {
          rpcSessionType = actionType.replace('start_', '');
-         const { location, validation } = await getLocationAndValidate(rpcSessionType); 
          
-         if (rpcSessionType === 'office' && validation && !validation.isWithin) {
-            throw new Error(`You are too far from the office to clock in! You are ${Math.round(validation.distance)} meters away.`);
+         if (rpcSessionType === 'office') {
+            try {
+               const { location, validation } = await getLocationAndValidate('office');
+               geo = { lat: location.latitude, lng: location.longitude };
+               
+               if (validation && !validation.isWithin) {
+                  setForgotCheckInData({ geo, distance: validation.distance });
+                  setShowForgotCheckInModal(true);
+                  setActionLoading(false);
+                  return; // Stop standard flow
+               }
+            } catch (geoErr) {
+               setForgotCheckInData({ geo: { lat: null, lng: null }, distance: null, error: geoErr.message });
+               setShowForgotCheckInModal(true);
+               setActionLoading(false);
+               return; // Stop standard flow
+            }
+         } else {
+            const { location } = await getLocationAndValidate(rpcSessionType); 
+            geo = { lat: location.latitude, lng: location.longitude };
          }
-         
-         geo = { lat: location.latitude, lng: location.longitude };
       } else if (actionType === 'end' && sessionState.activeSession?.session_type === 'office') {
          // Require location and validation for end of office session
          try {
@@ -543,6 +606,46 @@ export default function EmployeeDashboard() {
                 disabled={forgotLoading || !forgotReason}
               >
                 {forgotLoading ? <Loader2 className="spinner" size={18} /> : 'Submit & Check Out'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Forgot Check-In Modal */}
+      {showForgotCheckInModal && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1000,
+          display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '20px'
+        }}>
+          <div style={{
+            backgroundColor: '#fff', borderRadius: '24px', width: '100%', maxWidth: '400px', padding: '24px'
+          }}>
+            <h3 style={{ marginTop: 0, color: 'var(--emp-text-dark)' }}>Check In Override</h3>
+            <p style={{ color: 'var(--emp-text-muted)', fontSize: '14px', marginBottom: '20px' }}>
+              Your device reports you are outside the office (or GPS failed). Please provide a reason to force check in.
+            </p>
+            <textarea
+              style={{ width: '100%', padding: '12px', border: '1px solid var(--emp-border)', borderRadius: '12px', marginBottom: '16px', minHeight: '80px', fontFamily: 'inherit' }}
+              placeholder="e.g., I am in the office but GPS is inaccurate"
+              value={forgotCheckInReason}
+              onChange={(e) => setForgotCheckInReason(e.target.value)}
+            />
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button 
+                style={{ flex: 1, padding: '12px', borderRadius: '12px', border: '1px solid var(--emp-border)', backgroundColor: '#fff', fontWeight: 'bold' }}
+                onClick={() => setShowForgotCheckInModal(false)}
+                disabled={forgotCheckInLoading}
+              >
+                Cancel
+              </button>
+              <button 
+                style={{ flex: 1, padding: '12px', borderRadius: '12px', border: 'none', backgroundColor: 'var(--emp-primary)', color: 'white', fontWeight: 'bold', display: 'flex', justifyContent: 'center' }}
+                onClick={handleForgotCheckInSubmit}
+                disabled={forgotCheckInLoading || !forgotCheckInReason}
+              >
+                {forgotCheckInLoading ? <Loader2 className="spinner" size={18} /> : 'Submit & Check In'}
               </button>
             </div>
           </div>
