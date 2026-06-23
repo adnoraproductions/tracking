@@ -429,7 +429,8 @@ body {
 }
 
 .emp-nav-item:hover {
-  color: var(--emp-primary-light);
+  color: var(--emp-primary);
+  background-color: rgba(0, 0, 0, 0.03);
 }
 
 .emp-nav-item.active {
