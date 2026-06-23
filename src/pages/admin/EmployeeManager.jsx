@@ -77,8 +77,23 @@ export default function EmployeeManager() {
     if (!window.confirm(`Are you sure you want to FORCE CHECKOUT ${emp.full_name}? This will instantly end their active shift.`)) return;
     
     try {
-      const { error } = await supabase.rpc('admin_force_end_session', { p_employee_id: emp.id });
+      const { data, error } = await supabase.rpc('admin_force_end_session', { p_employee_id: emp.id });
       if (error) throw error;
+      
+      // Log the admin action so it appears in the timeline
+      if (data && data.work_session_id) {
+        const { data: wsData } = await supabase.from('work_sessions').select('attendance_day_id').eq('id', data.work_session_id).single();
+        if (wsData) {
+          await supabase.from('attendance_corrections').insert({
+            employee_id: emp.id,
+            attendance_day_id: wsData.attendance_day_id,
+            work_session_id: data.work_session_id,
+            status: 'resolved',
+            reason: 'Admin Force Check Out'
+          });
+        }
+      }
+      
       alert(`Successfully ended active session for ${emp.full_name}`);
       await fetchEmployees();
     } catch (err) {
@@ -91,8 +106,20 @@ export default function EmployeeManager() {
     if (!window.confirm(`Are you sure you want to FORCE CHECK IN ${emp.full_name}? This will instantly start an Office shift for them.`)) return;
     
     try {
-      const { error } = await supabase.rpc('admin_force_start_session', { p_employee_id: emp.id, p_session_type: 'office' });
+      const { data, error } = await supabase.rpc('admin_force_start_session', { p_employee_id: emp.id, p_session_type: 'office' });
       if (error) throw error;
+      
+      // Log the admin action so it appears in the timeline
+      if (data && data.work_session_id && data.attendance_day_id) {
+        await supabase.from('attendance_corrections').insert({
+          employee_id: emp.id,
+          attendance_day_id: data.attendance_day_id,
+          work_session_id: data.work_session_id,
+          status: 'resolved',
+          reason: 'Admin Force Check In'
+        });
+      }
+      
       alert(`Successfully started office session for ${emp.full_name}`);
       await fetchEmployees();
     } catch (err) {
