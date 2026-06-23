@@ -50,10 +50,18 @@ export default function EmployeeDashboard() {
       }
 
       // 0.5 Device Binding Check
-      let localDeviceId = localStorage.getItem('device_id');
-      if (!localDeviceId) {
-        localDeviceId = crypto.randomUUID();
-        localStorage.setItem('device_id', localDeviceId);
+      let localDeviceId = null;
+      try {
+        localDeviceId = localStorage.getItem('device_id');
+        if (!localDeviceId) {
+          localDeviceId = crypto.randomUUID();
+          localStorage.setItem('device_id', localDeviceId);
+        }
+      } catch (err) {
+        console.warn('localStorage is blocked by browser settings:', err);
+        // Provide a temporary random id so the app doesn't crash, 
+        // though device binding won't persist across reloads in this restricted environment
+        localDeviceId = "fallback-device-id-" + crypto.randomUUID();
       }
 
       let isDeviceValid = true;
