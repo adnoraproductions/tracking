@@ -85,28 +85,34 @@ export default function AdminAttendance() {
     try {
       setIsExporting(true);
       
-      const startDateStr = format(new Date(exportYear, exportMonth - 1, 1), 'yyyy-MM-dd');
-      const endDateStr = format(new Date(exportYear, exportMonth, 0), 'yyyy-MM-dd');
+      const startDate = new Date(exportYear, exportMonth - 1, 1);
+      const endDate = new Date(exportYear, exportMonth, 0);
+      const daysInMonth = endDate.getDate();
+      
+      const startDateStr = format(startDate, 'yyyy-MM-dd');
+      const endDateStr = format(endDate, 'yyyy-MM-dd');
 
-      // 1. Fetch all active profiles
+      // 1. Fetch all active profiles excluding admins
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
-        .select('id, full_name, employee_code, status')
-        .eq('status', 'active');
+        .select('id, full_name, employee_code, status, role')
+        .eq('status', 'active')
+        .neq('role', 'admin');
       
       if (profilesError) throw profilesError;
 
       // 2. Fetch attendance_days for the month
       const { data: attendanceData, error: attendanceError } = await supabase
         .from('attendance_days')
-        .select('employee_id, status, total_work_minutes, total_break_minutes')
+        .select('employee_id, date, status, total_work_minutes, total_break_minutes')
         .gte('date', startDateStr)
         .lte('date', endDateStr);
 
       if (attendanceError) throw attendanceError;
 
       // 3. Aggregate data
-      const headers = ['Employee Name', 'Employee Code', 'Total Days Present', 'Total Days Absent', 'Total Work Time', 'Total Break Time'];
+      const daysHeaders = Array.from({ length: daysInMonth }, (_, i) => i + 1);
+      const headers = ['Employee Code', 'Employee Name', ...daysHeaders, 'Total Days Present', 'Total Days Absent', 'Total Work Time', 'Total Break Time'];
       
       const formatDurationMins = (totalMins) => {
         if (!totalMins) return '0h 0m';
@@ -125,17 +131,24 @@ export default function AdminAttendance() {
           let totalWork = 0;
           let totalBreak = 0;
 
-          empLogs.forEach(log => {
+          const dailyData = daysHeaders.map(dayNum => {
+            const dayStr = format(new Date(exportYear, exportMonth - 1, dayNum), 'yyyy-MM-dd');
+            const log = empLogs.find(l => l.date === dayStr);
+            
+            if (!log) return '"-"';
+
             if (log.status === 'absent') {
               absentCount++;
+              return '"Absent"';
             } else {
               presentCount++; // counts present, late, field_work, half_day
+              totalWork += (log.total_work_minutes || 0);
+              totalBreak += (log.total_break_minutes || 0);
+              return `"${formatDurationMins(log.total_work_minutes || 0)}"`;
             }
-            totalWork += (log.total_work_minutes || 0);
-            totalBreak += (log.total_break_minutes || 0);
           });
 
-          return `"${emp.full_name || 'Unknown'}","${emp.employee_code || '-'}","${presentCount}","${absentCount}","${formatDurationMins(totalWork)}","${formatDurationMins(totalBreak)}"`;
+          return `"${emp.employee_code || '-'}","${emp.full_name || 'Unknown'}",${dailyData.join(',')},"${presentCount}","${absentCount}","${formatDurationMins(totalWork)}","${formatDurationMins(totalBreak)}"`;
         })
       ];
 
