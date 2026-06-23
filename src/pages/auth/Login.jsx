@@ -24,13 +24,13 @@ export default function Login() {
     setLoading(true);
     setError(null);
 
-    const { error: signInError } = await signIn(email, password);
-    
-    if (signInError) {
-      setError(signInError.message);
-      setLoading(false);
-    } else {
+    try {
+      await signIn(email, password);
       // AuthContext will automatically update and redirect will happen
+    } catch (err) {
+      console.error('Login error:', err);
+      setError(err.message || 'Failed to sign in. Please check your credentials.');
+      setLoading(false);
     }
   };
 
