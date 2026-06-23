@@ -38,7 +38,8 @@ export default function EmployeeManager() {
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('role', { ascending: true })
+        .order('full_name', { ascending: true });
       
       if (error) throw error;
       setEmployees(data);
