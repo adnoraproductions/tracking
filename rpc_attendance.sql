@@ -301,3 +301,56 @@ BEGIN
   RETURN jsonb_build_object('success', true, 'work_session_id', v_work_session_id);
 END;
 $$;
+
+-- 7. ADMIN FORCE START SESSION
+CREATE OR REPLACE FUNCTION public.admin_force_start_session(p_employee_id UUID, p_session_type public.session_type)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_is_admin BOOLEAN;
+  v_attendance_day_id UUID;
+  v_work_session_id UUID;
+  v_current_date DATE;
+BEGIN
+  -- Verify caller is admin
+  SELECT (role = 'admin') INTO v_is_admin FROM public.profiles WHERE id = auth.uid();
+  IF NOT v_is_admin THEN
+    RAISE EXCEPTION 'Unauthorized';
+  END IF;
+
+  v_current_date := CURRENT_DATE;
+
+  -- 1. Get or create today's attendance_day
+  SELECT id INTO v_attendance_day_id
+  FROM public.attendance_days
+  WHERE employee_id = p_employee_id AND date = v_current_date;
+
+  IF v_attendance_day_id IS NULL THEN
+    INSERT INTO public.attendance_days (employee_id, date, status)
+    VALUES (p_employee_id, v_current_date, 'present')
+    RETURNING id INTO v_attendance_day_id;
+  END IF;
+
+  -- 2. Check if there is already an active session
+  IF EXISTS (
+    SELECT 1 FROM public.work_sessions 
+    WHERE employee_id = p_employee_id AND status IN ('working', 'on_break')
+  ) THEN
+    RAISE EXCEPTION 'An active session already exists for this employee.';
+  END IF;
+
+  -- 3. Create work_session
+  INSERT INTO public.work_sessions (attendance_day_id, employee_id, session_type, status, started_at, start_latitude, start_longitude)
+  VALUES (v_attendance_day_id, p_employee_id, p_session_type, 'working', NOW(), NULL, NULL)
+  RETURNING id INTO v_work_session_id;
+
+  -- 4. Log immutable event
+  INSERT INTO public.attendance_events (employee_id, attendance_day_id, event_type, session_type, timestamp)
+  VALUES (p_employee_id, v_attendance_day_id, 'session_started', p_session_type, NOW());
+
+  RETURN jsonb_build_object('success', true, 'work_session_id', v_work_session_id, 'attendance_day_id', v_attendance_day_id);
+END;
+$$;

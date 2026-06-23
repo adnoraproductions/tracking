@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase/client';
 import { createClient } from '@supabase/supabase-js';
-import { Loader2, Edit2, X, Plus, UserPlus, Trash2, Power, Settings, Smartphone, LogOut } from 'lucide-react';
+import { Loader2, Edit2, X, Plus, UserPlus, Trash2, Power, Settings, Smartphone, LogOut, LogIn } from 'lucide-react';
 
 // Create a secondary client specifically for signing up users so it doesn't overwrite the admin's session
 const adminAuthClient = createClient(
@@ -84,6 +84,20 @@ export default function EmployeeManager() {
     } catch (err) {
       console.error(err);
       alert('Failed to force end session: ' + err.message);
+    }
+  };
+
+  const handleForceStartSession = async (emp) => {
+    if (!window.confirm(`Are you sure you want to FORCE CHECK IN ${emp.full_name}? This will instantly start an Office shift for them.`)) return;
+    
+    try {
+      const { error } = await supabase.rpc('admin_force_start_session', { p_employee_id: emp.id, p_session_type: 'office' });
+      if (error) throw error;
+      alert(`Successfully started office session for ${emp.full_name}`);
+      await fetchEmployees();
+    } catch (err) {
+      console.error(err);
+      alert('Failed to force start session: ' + err.message);
     }
   };
 
@@ -432,7 +446,7 @@ export default function EmployeeManager() {
                       <td data-label="Joined">{emp.joined_date ? new Date(emp.joined_date).toLocaleDateString() : new Date(emp.created_at).toLocaleDateString()}</td>
                       <td data-label="Actions" style={{ textAlign: 'right' }}>
                         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '4px', position: 'relative', zIndex: 50 }}>
-                          {activeSessions[emp.id] && (
+                          {activeSessions[emp.id] ? (
                             <button 
                               type="button"
                               onClick={() => handleForceEndSession(emp)}
@@ -441,6 +455,16 @@ export default function EmployeeManager() {
                               style={{ padding: '6px', border: 'none', color: '#dc2626', pointerEvents: 'auto', backgroundColor: '#fee2e2' }}
                             >
                               <LogOut size={16} style={{ pointerEvents: 'none' }} />
+                            </button>
+                          ) : (
+                            <button 
+                              type="button"
+                              onClick={() => handleForceStartSession(emp)}
+                              className="admin-btn secondary"
+                              title="Force Check In"
+                              style={{ padding: '6px', border: 'none', color: '#16a34a', pointerEvents: 'auto', backgroundColor: '#dcfce7' }}
+                            >
+                              <LogIn size={16} style={{ pointerEvents: 'none' }} />
                             </button>
                           )}
                           <button 
