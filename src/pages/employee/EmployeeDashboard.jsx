@@ -175,10 +175,16 @@ export default function EmployeeDashboard() {
          geo = { lat: location.latitude, lng: location.longitude };
       } else {
          // Generic location for other actions
-         const pos = await new Promise((resolve, reject) => {
-            navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 10000 });
-         });
-         geo = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+         // If location fails or times out, we don't want to trap the user and prevent them from checking out.
+         try {
+           const pos = await new Promise((resolve, reject) => {
+              navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 8000, enableHighAccuracy: false });
+           });
+           geo = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+         } catch (geoErr) {
+           console.warn("Location fetch failed, proceeding anyway to not block checkout:", geoErr);
+           geo = { lat: 0, lng: 0 };
+         }
       }
 
       const rpcName = 
