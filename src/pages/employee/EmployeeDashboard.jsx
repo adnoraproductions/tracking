@@ -169,8 +169,8 @@ export default function EmployeeDashboard() {
     try {
       // 1. Check out normally
       const { data, error } = await supabase.rpc('rpc_end_day', {
-        p_lat: forgotCheckoutData.geo.lat,
-        p_lng: forgotCheckoutData.geo.lng
+        p_lat: null, // Don't save location for office checkouts to save space
+        p_lng: null
       });
       if (error) throw error;
       
@@ -245,7 +245,7 @@ export default function EmployeeDashboard() {
            geo = { lat: pos.coords.latitude, lng: pos.coords.longitude };
          } catch (geoErr) {
            console.warn("Location fetch failed, proceeding anyway to not block checkout:", geoErr);
-           geo = { lat: 0, lng: 0 };
+           geo = { lat: null, lng: null };
          }
       }
 
@@ -255,9 +255,11 @@ export default function EmployeeDashboard() {
         actionType === 'break_in' ? 'rpc_toggle_break' :
         actionType === 'end' ? 'rpc_end_day' : null;
 
+      const isOfficeSession = rpcSessionType === 'office' || sessionState.activeSession?.session_type === 'office';
+
       const args = actionType.startsWith('start_') 
-        ? { p_session_type: rpcSessionType, p_lat: geo.lat, p_lng: geo.lng }
-        : { p_lat: geo.lat, p_lng: geo.lng };
+        ? { p_session_type: rpcSessionType, p_lat: isOfficeSession ? null : geo.lat, p_lng: isOfficeSession ? null : geo.lng }
+        : { p_lat: isOfficeSession ? null : geo.lat, p_lng: isOfficeSession ? null : geo.lng };
 
       const { data, error } = await supabase.rpc(rpcName, args);
       
