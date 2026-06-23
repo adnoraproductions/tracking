@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase/client';
-import { Loader2, Download, Search, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, MapPin } from 'lucide-react';
+import { Loader2, Download, Search, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, MapPin, X } from 'lucide-react';
 import { format, differenceInSeconds } from 'date-fns';
 import CalendarModal from '../../components/CalendarModal';
 
@@ -303,7 +303,14 @@ export default function AdminAttendance() {
                       {isExpanded && log.attendance_events && log.attendance_events.length > 0 && (
                         <tr>
                           <td colSpan="7" style={{ padding: '0', backgroundColor: '#f9fafb' }}>
-                            <div style={{ padding: '24px', borderTop: '1px solid var(--admin-border)', borderBottom: '2px solid var(--admin-border)' }}>
+                            <div style={{ padding: '24px', position: 'relative', borderTop: '1px solid var(--admin-border)', borderBottom: '2px solid var(--admin-border)' }}>
+                              <button 
+                                onClick={(e) => { e.stopPropagation(); toggleRow(); }} 
+                                style={{ position: 'absolute', top: '16px', right: '16px', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--admin-text-muted)', padding: '4px' }}
+                                title="Close Details"
+                              >
+                                <X size={20} />
+                              </button>
                               <h4 style={{ margin: '0 0 16px 0', fontSize: '14px', color: 'var(--admin-text-dark)' }}>Detailed Timeline Log</h4>
                               <div style={{ display: 'flex', flexDirection: 'column' }}>
                               {log.attendance_events
