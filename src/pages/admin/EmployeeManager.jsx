@@ -69,9 +69,9 @@ export default function EmployeeManager() {
         .from('profiles')
         .update({
           full_name: editForm.full_name,
-          employee_code: editForm.employee_code,
+          employee_code: editForm.employee_code || null,
           role: editForm.role,
-          designation: editForm.designation,
+          designation: editForm.designation || null,
           joined_date: editForm.joined_date || null
         })
         .eq('id', editingId);
