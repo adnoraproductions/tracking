@@ -56,7 +56,7 @@ export default function EmployeeDashboard() {
       }
 
       let isDeviceValid = true;
-      const deviceBindingEnabled = profile.is_device_binding_enabled ?? true;
+      const deviceBindingEnabled = profile.is_device_binding_enabled ?? false;
 
       if (deviceBindingEnabled) {
         if (!profile.registered_device_id) {

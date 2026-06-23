@@ -151,7 +151,7 @@ export default function EmployeeManager() {
       custom_office_latitude: emp.custom_office_latitude || '',
       custom_office_longitude: emp.custom_office_longitude || '',
       custom_office_radius: emp.custom_office_radius || '',
-      is_device_binding_enabled: emp.is_device_binding_enabled ?? true,
+      is_device_binding_enabled: emp.is_device_binding_enabled ?? false,
       is_custom_geofence_enabled: emp.is_custom_geofence_enabled ?? false
     });
   };
@@ -544,7 +544,7 @@ export default function EmployeeManager() {
                     <span style={{ fontSize: '13px', fontWeight: '500', color: settingsForm.is_device_binding_enabled ? 'var(--admin-primary)' : 'var(--admin-text-muted)' }}>
                       {settingsForm.is_device_binding_enabled ? 'Enabled' : 'Disabled'}
                     </span>
-                    <input type="checkbox" style={{ display: 'none' }} checked={settingsForm.is_device_binding_enabled} onChange={(e) => setSettingsForm({...settingsForm, is_device_binding_enabled: e.target.checked})} />
+                    <input type="checkbox" style={{ opacity: 0, position: 'absolute', width: 0, height: 0 }} checked={settingsForm.is_device_binding_enabled} onChange={(e) => setSettingsForm({...settingsForm, is_device_binding_enabled: e.target.checked})} />
                     <div style={{
                       width: '40px', height: '24px', backgroundColor: settingsForm.is_device_binding_enabled ? 'var(--admin-primary)' : '#e5e7eb',
                       borderRadius: '12px', position: 'relative', transition: 'background-color 0.2s'
@@ -592,7 +592,7 @@ export default function EmployeeManager() {
                     <span style={{ fontSize: '13px', fontWeight: '500', color: settingsForm.is_custom_geofence_enabled ? 'var(--admin-primary)' : 'var(--admin-text-muted)' }}>
                       {settingsForm.is_custom_geofence_enabled ? 'Enabled' : 'Disabled'}
                     </span>
-                    <input type="checkbox" style={{ display: 'none' }} checked={settingsForm.is_custom_geofence_enabled} onChange={(e) => setSettingsForm({...settingsForm, is_custom_geofence_enabled: e.target.checked})} />
+                    <input type="checkbox" style={{ opacity: 0, position: 'absolute', width: 0, height: 0 }} checked={settingsForm.is_custom_geofence_enabled} onChange={(e) => setSettingsForm({...settingsForm, is_custom_geofence_enabled: e.target.checked})} />
                     <div style={{
                       width: '40px', height: '24px', backgroundColor: settingsForm.is_custom_geofence_enabled ? 'var(--admin-primary)' : '#e5e7eb',
                       borderRadius: '12px', position: 'relative', transition: 'background-color 0.2s'
