@@ -272,7 +272,9 @@ export default function AdminAttendance() {
                   }
 
                   const isExpanded = expandedRowId === log.id;
-                  const handleToggle = () => {
+                  const handleToggle = (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
                     if (isExpanded) {
                       setExpandedRowId(null);
                     } else {
