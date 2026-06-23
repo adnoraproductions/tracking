@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase/client';
-import { Loader2, Download, Search, ChevronLeft, ChevronRight, ChevronDown, ChevronUp } from 'lucide-react';
+import { Loader2, Download, Search, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, MapPin } from 'lucide-react';
 import { format, differenceInSeconds } from 'date-fns';
 import CalendarModal from '../../components/CalendarModal';
 
@@ -346,7 +346,20 @@ export default function AdminAttendance() {
                                           {badgeText}
                                         </div>
                                         <div>
-                                          <h4 style={{ margin: '0 0 4px 0', fontSize: '14px', color: 'var(--admin-text-dark)' }}>{timeStr}</h4>
+                                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                                            <h4 style={{ margin: 0, fontSize: '14px', color: 'var(--admin-text-dark)' }}>{timeStr}</h4>
+                                            {evt.latitude && evt.longitude && (
+                                              <a 
+                                                href={`https://www.google.com/maps/search/?api=1&query=${evt.latitude},${evt.longitude}`} 
+                                                target="_blank" 
+                                                rel="noopener noreferrer"
+                                                title="View on Google Maps"
+                                                style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: 'var(--admin-primary)', textDecoration: 'none', backgroundColor: '#e0e7ff', padding: '2px 6px', borderRadius: '4px' }}
+                                              >
+                                                <MapPin size={12} /> Map
+                                              </a>
+                                            )}
+                                          </div>
                                           <p style={{ margin: 0, fontSize: '12px', color: 'var(--admin-text-muted)' }}>{durationStr}</p>
                                         </div>
                                       </div>
