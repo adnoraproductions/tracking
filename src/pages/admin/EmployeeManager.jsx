@@ -47,7 +47,7 @@ export default function EmployeeManager() {
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
-        .order('role', { ascending: true })
+        .order('employee_code', { ascending: true, nullsFirst: false })
         .order('full_name', { ascending: true });
       
       if (error) throw error;
@@ -282,8 +282,8 @@ export default function EmployeeManager() {
           <table className="admin-table">
             <thead>
               <tr>
-                <th>Name</th>
                 <th>Emp Code</th>
+                <th>Name</th>
                 <th>Designation</th>
                 <th>Status</th>
                 <th>Role</th>
@@ -296,6 +296,16 @@ export default function EmployeeManager() {
                 <tr key={emp.id}>
                   {editingId === emp.id ? (
                     <>
+                      <td data-label="Emp Code">
+                        <input 
+                          className="admin-input"
+                          value={editForm.employee_code} 
+                          onChange={e => setEditForm({...editForm, employee_code: e.target.value})} 
+                          placeholder="Emp Code"
+                          style={{ width: '100%', padding: '8px', border: '1px solid var(--admin-border)', borderRadius: '8px' }}
+                          onKeyDown={e => e.key === 'Enter' && handleSaveEdit(e)}
+                        />
+                      </td>
                       <td data-label="Name">
                         <input 
                           className="admin-input"
@@ -305,16 +315,6 @@ export default function EmployeeManager() {
                           style={{ width: '100%', padding: '8px', border: '1px solid var(--admin-border)', borderRadius: '8px' }}
                           onKeyDown={e => e.key === 'Enter' && handleSaveEdit(e)}
                           required
-                        />
-                      </td>
-                      <td data-label="Emp Code">
-                        <input 
-                          className="admin-input"
-                          value={editForm.employee_code} 
-                          onChange={e => setEditForm({...editForm, employee_code: e.target.value})} 
-                          placeholder="Emp Code"
-                          style={{ width: '100%', padding: '8px', border: '1px solid var(--admin-border)', borderRadius: '8px' }}
-                          onKeyDown={e => e.key === 'Enter' && handleSaveEdit(e)}
                         />
                       </td>
                       <td data-label="Designation">
@@ -375,11 +375,11 @@ export default function EmployeeManager() {
                     </>
                   ) : (
                     <>
+                      <td data-label="Emp Code">{emp.employee_code || '-'}</td>
                       <td data-label="Name">
                         <div style={{ fontWeight: '600' }}>{emp.full_name || 'Unknown'}</div>
                         <div style={{ fontSize: '12px', color: 'var(--admin-text-muted)' }}>{emp.id.split('-')[0]}</div>
                       </td>
-                      <td data-label="Emp Code">{emp.employee_code || '-'}</td>
                       <td data-label="Designation">{emp.designation || '-'}</td>
                       <td data-label="Status">
                         <span className={`admin-badge ${emp.status === 'inactive' ? 'gray' : 'green'}`}>
