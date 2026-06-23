@@ -170,7 +170,6 @@ body {
 
 @media (hover: hover) {
   .admin-card:hover {
-    transform: translateY(-2px);
     box-shadow: 0 8px 30px rgba(0,0,0,0.06);
   }
 }
@@ -266,11 +265,10 @@ body {
 @media (hover: hover) {
   .admin-btn.primary:hover {
     background-color: #047857;
-    transform: scale(1.02);
   }
 }
 .admin-btn.primary:active {
-  transform: scale(0.98);
+  background-color: #065f46;
 }
 
 .admin-btn.secondary {
@@ -282,11 +280,10 @@ body {
 @media (hover: hover) {
   .admin-btn.secondary:hover {
     background-color: #f9fafb;
-    transform: scale(1.02);
   }
 }
 .admin-btn.secondary:active {
-  transform: scale(0.98);
+  background-color: #f3f4f6;
 }
 
 /* Forms */

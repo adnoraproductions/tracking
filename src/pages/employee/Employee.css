@@ -286,16 +286,21 @@ body {
   font-size: 12px;
   cursor: pointer;
   box-shadow: var(--glass-shadow);
-  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s;
+  transition: border-color 0.2s;
 }
 
-.emp-btn-square:hover {
-  border-color: var(--emp-primary-light);
-  transform: scale(1.02);
+@media (hover: hover) {
+  .emp-btn-square:hover {
+    border-color: var(--emp-primary-light);
+  }
 }
 
-.emp-btn-square:active {
-  transform: scale(0.97);
+.emp-action-btn:hover {
+  background-color: var(--glass-bg-hover);
+}
+
+.emp-action-btn:active {
+  background-color: var(--glass-border);
 }
 
 .emp-btn-square.active {
