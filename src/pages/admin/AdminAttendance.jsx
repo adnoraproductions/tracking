@@ -516,22 +516,28 @@ export default function AdminAttendance() {
                                             )}
                                           </div>
                                           <p style={{ margin: 0, fontSize: '12px', color: 'var(--admin-text-muted)' }}>{durationStr}</p>
-                                          
-                                          {/* Show related correction requests */}
-                                          {log.attendance_corrections && log.attendance_corrections
-                                            .filter(c => Math.abs(new Date(c.created_at).getTime() - new Date(evt.timestamp).getTime()) < 60000)
-                                            .map(c => (
-                                              <div key={c.id} style={{ marginTop: '8px', padding: '8px', backgroundColor: '#fff7ed', borderLeft: '3px solid #f97316', borderRadius: '4px', fontSize: '12px' }}>
-                                                <strong style={{ color: '#c2410c' }}>Override Request:</strong> <span style={{ color: '#9a3412' }}>{c.reason}</span>
-                                              </div>
-                                            ))
-                                          }
+                                          </div>
                                         </div>
-                                      </div>
                                     );
                                   })
                                 }
                               </div>
+                              
+                              {/* Display all override requests for this day below the timeline */}
+                              {log.attendance_corrections && log.attendance_corrections.length > 0 && (
+                                <div style={{ marginTop: '24px', paddingTop: '16px', borderTop: '1px dashed var(--admin-border)' }}>
+                                  <h4 style={{ margin: '0 0 12px 0', fontSize: '13px', color: 'var(--admin-text-dark)' }}>Override & Admin Actions for this Day</h4>
+                                  {log.attendance_corrections.map(c => (
+                                    <div key={c.id} style={{ marginBottom: '8px', padding: '10px 12px', backgroundColor: '#fff7ed', borderLeft: '3px solid #f97316', borderRadius: '4px', fontSize: '12px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <strong style={{ color: '#c2410c' }}>{c.reason.startsWith('Admin Force') ? 'Admin Action' : 'Employee Request'}</strong>
+                                        <span style={{ color: '#ea580c', fontSize: '11px' }}>{format(new Date(c.created_at), 'hh:mm a')}</span>
+                                      </div>
+                                      <span style={{ color: '#9a3412' }}>{c.reason}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
                             </div>
                           </td>
                         </tr>

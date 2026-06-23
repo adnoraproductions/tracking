@@ -84,13 +84,14 @@ export default function EmployeeManager() {
       if (data && data.work_session_id) {
         const { data: wsData } = await supabase.from('work_sessions').select('attendance_day_id').eq('id', data.work_session_id).single();
         if (wsData) {
-          await supabase.from('attendance_corrections').insert({
+          const { error: insErr } = await supabase.from('attendance_corrections').insert({
             employee_id: emp.id,
             attendance_day_id: wsData.attendance_day_id,
             work_session_id: data.work_session_id,
             status: 'resolved',
             reason: 'Admin Force Check Out'
           });
+          if (insErr) console.error("Insert Admin Force Check Out Failed:", insErr);
         }
       }
       
@@ -113,13 +114,14 @@ export default function EmployeeManager() {
       if (data && data.work_session_id) {
         const { data: wsData } = await supabase.from('work_sessions').select('attendance_day_id').eq('id', data.work_session_id).single();
         if (wsData) {
-          await supabase.from('attendance_corrections').insert({
+          const { error: insErr } = await supabase.from('attendance_corrections').insert({
             employee_id: emp.id,
             attendance_day_id: wsData.attendance_day_id,
             work_session_id: data.work_session_id,
             status: 'resolved',
             reason: 'Admin Force Check In'
           });
+          if (insErr) console.error("Insert Admin Force Check In Failed:", insErr);
         }
       }
       
