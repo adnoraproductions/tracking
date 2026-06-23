@@ -3,6 +3,8 @@ import { supabase } from '../../lib/supabase/client';
 import { Loader2, Download, Search, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, MapPin, X } from 'lucide-react';
 import { format, differenceInSeconds } from 'date-fns';
 import CalendarModal from '../../components/CalendarModal';
+import ExcelJS from 'exceljs';
+import { saveAs } from 'file-saver';
 
 export default function AdminAttendance() {
   const [logs, setLogs] = useState([]);
@@ -81,7 +83,7 @@ export default function AdminAttendance() {
   });
 
 
-  const generateMonthlyCSV = async () => {
+  const generateMonthlyExcel = async () => {
     try {
       setIsExporting(true);
       
@@ -113,10 +115,41 @@ export default function AdminAttendance() {
 
       if (attendanceError) throw attendanceError;
 
-      // 3. Aggregate data
+      // 3. Create Excel Workbook
+      const workbook = new ExcelJS.Workbook();
+      const sheet = workbook.addWorksheet('Monthly Attendance');
+
       const daysHeaders = Array.from({ length: daysInMonth }, (_, i) => i + 1);
-      const headers = ['Employee Code', 'Employee Name', ...daysHeaders, 'Total Days Present', 'Total Days Absent', 'Total Work Time', 'Total Break Time'];
       
+      // Define Columns
+      const columns = [
+        { header: 'Employee Code', key: 'code', width: 16 },
+        { header: 'Employee Name', key: 'name', width: 25 },
+        ...daysHeaders.map(d => ({ header: String(d), key: `day_${d}`, width: 14 })),
+        { header: 'Total Days Present', key: 'present', width: 20 },
+        { header: 'Total Days Absent', key: 'absent', width: 20 },
+        { header: 'Total Work Time', key: 'work_time', width: 20 },
+        { header: 'Total Break Time', key: 'break_time', width: 20 }
+      ];
+      
+      sheet.columns = columns;
+
+      // Format Header Row
+      const headerRow = sheet.getRow(1);
+      headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+      headerRow.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF1F2937' } // Dark gray/blue
+      };
+      headerRow.alignment = { vertical: 'middle', horizontal: 'center' };
+      headerRow.height = 30;
+
+      // Freeze first 2 columns and header row
+      sheet.views = [
+        { state: 'frozen', xSplit: 2, ySplit: 1 }
+      ];
+
       const formatDurationMins = (totalMins) => {
         if (!totalMins) return '0h 0m';
         const h = Math.floor(totalMins / 60);
@@ -124,35 +157,39 @@ export default function AdminAttendance() {
         return `${h}h ${m}m`;
       };
 
-      const csvRows = [
-        headers.join(','),
-        ...profilesData.map(emp => {
-          const empLogs = attendanceData.filter(log => log.employee_id === emp.id);
+      // Populate Rows
+      profilesData.forEach((emp, index) => {
+        const empLogs = attendanceData.filter(log => log.employee_id === emp.id);
+        
+        let presentCount = 0;
+        let absentCount = 0;
+        let totalWork = 0;
+        let totalBreak = 0;
+
+        const rowData = {
+          code: emp.employee_code || '-',
+          name: emp.full_name || 'Unknown',
+        };
+
+        daysHeaders.forEach(dayNum => {
+          const dateObj = new Date(exportYear, exportMonth - 1, dayNum);
+          const isSunday = dateObj.getDay() === 0;
+          const dayStr = format(dateObj, 'yyyy-MM-dd');
+          const log = empLogs.find(l => l.date === dayStr);
+          const cellKey = `day_${dayNum}`;
           
-          let presentCount = 0;
-          let absentCount = 0;
-          let totalWork = 0;
-          let totalBreak = 0;
-
-          const dailyData = daysHeaders.map(dayNum => {
-            const dateObj = new Date(exportYear, exportMonth - 1, dayNum);
-            const isSunday = dateObj.getDay() === 0;
-            const dayStr = format(dateObj, 'yyyy-MM-dd');
-            const log = empLogs.find(l => l.date === dayStr);
-            
-            if (!log) {
-              return isSunday ? '"SUNDAY"' : '"-"';
-            }
-
+          if (!log) {
+            rowData[cellKey] = isSunday ? 'SUNDAY' : '-';
+          } else {
             let cellContent = [];
             if (isSunday) cellContent.push("SUNDAY");
 
             if (log.status === 'absent') {
               absentCount++;
               cellContent.push("Absent");
-              return `"${cellContent.join('\n')}"`;
+              rowData[cellKey] = cellContent.join('\n');
             } else {
-              presentCount++; // counts present, late, field_work, half_day
+              presentCount++;
               totalWork += (log.total_work_minutes || 0);
               totalBreak += (log.total_break_minutes || 0);
               
@@ -175,28 +212,62 @@ export default function AdminAttendance() {
               cellContent.push(`W: ${formatDurationMins(log.total_work_minutes || 0)}`);
               cellContent.push(`B: ${formatDurationMins(log.total_break_minutes || 0)}`);
               
-              return `"${cellContent.join('\n')}"`;
+              rowData[cellKey] = cellContent.join('\n');
             }
-          });
+          }
+        });
 
-          return `"${emp.employee_code || '-'}","${emp.full_name || 'Unknown'}",${dailyData.join(',')},"${presentCount}","${absentCount}","${formatDurationMins(totalWork)}","${formatDurationMins(totalBreak)}"`;
-        })
-      ];
+        rowData.present = presentCount;
+        rowData.absent = absentCount;
+        rowData.work_time = formatDurationMins(totalWork);
+        rowData.break_time = formatDurationMins(totalBreak);
 
-      const blob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement("a");
-      const url = URL.createObjectURL(blob);
-      link.setAttribute("href", url);
-      link.setAttribute("download", `monthly_attendance_summary_${exportYear}_${exportMonth.toString().padStart(2, '0')}.csv`);
-      link.style.visibility = 'hidden';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+        const newRow = sheet.addRow(rowData);
+        newRow.height = 70; // Make height taller for multi-line
+        
+        // Apply alignment and conditional formatting to cells
+        newRow.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+          cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
+          cell.border = {
+            top: { style: 'thin', color: { argb: 'FFEEEEEE' } },
+            left: { style: 'thin', color: { argb: 'FFEEEEEE' } },
+            bottom: { style: 'thin', color: { argb: 'FFEEEEEE' } },
+            right: { style: 'thin', color: { argb: 'FFEEEEEE' } }
+          };
+
+          // Stripe alternating rows (columns 1 and 2 mostly)
+          if (index % 2 === 0) {
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF9FAFB' } };
+          } else {
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFFF' } };
+          }
+
+          // If it's a day column (3 to 3+daysInMonth-1)
+          if (colNumber > 2 && colNumber <= 2 + daysInMonth) {
+            const val = cell.value;
+            if (val === 'SUNDAY') {
+              cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFEE2E2' } }; // Light red
+              cell.font = { color: { argb: 'FFEF4444' }, bold: true };
+            } else if (val && val.includes('SUNDAY')) {
+              // Worked on Sunday
+              cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFEE2E2' } };
+            } else if (val === 'Absent' || (val && val.includes('Absent'))) {
+               cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFEE2E2' } }; 
+               cell.font = { color: { argb: 'FFEF4444' }, bold: true };
+            }
+          }
+        });
+      });
+
+      // Write and save
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      saveAs(blob, `monthly_attendance_summary_${exportYear}_${exportMonth.toString().padStart(2, '0')}.xlsx`);
       
       setShowExportModal(false);
     } catch (err) {
       console.error(err);
-      setError('Failed to generate monthly CSV');
+      setError('Failed to generate monthly Excel');
     } finally {
       setIsExporting(false);
     }
@@ -216,7 +287,7 @@ export default function AdminAttendance() {
           </div>
           <button className="admin-btn secondary" onClick={() => setShowExportModal(true)}>
             <Download size={16} />
-            Export CSV
+            Export Excel
           </button>
         </div>
       </div>
@@ -468,7 +539,7 @@ export default function AdminAttendance() {
             <div style={{ padding: '24px', borderBottom: '1px solid var(--admin-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <h2 style={{ margin: 0, fontSize: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Download size={20} color="var(--admin-primary)" />
-                Export Monthly CSV
+                Export Monthly Excel
               </h2>
               <button onClick={() => setShowExportModal(false)} style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}>
                 <X size={24} color="var(--admin-text-muted)" />
@@ -477,7 +548,7 @@ export default function AdminAttendance() {
             
             <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <p style={{ margin: 0, fontSize: '14px', color: 'var(--admin-text-muted)' }}>
-                Download a summarized CSV of employee attendance totals for a specific month.
+                Download a styled Excel spreadsheet of employee attendance totals for a specific month.
               </p>
               
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
@@ -520,11 +591,11 @@ export default function AdminAttendance() {
               </button>
               <button 
                 className="admin-btn primary" 
-                onClick={generateMonthlyCSV}
+                onClick={generateMonthlyExcel}
                 disabled={isExporting}
               >
                 {isExporting ? <Loader2 size={18} className="spinner" /> : <Download size={18} />}
-                {isExporting ? 'Generating...' : 'Download CSV'}
+                {isExporting ? 'Generating...' : 'Download Excel'}
               </button>
             </div>
           </div>
