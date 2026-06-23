@@ -389,29 +389,29 @@ export default function EmployeeManager() {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                 <label style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '14px', fontWeight: '500' }}>
                   Email Address *
-                  <input type="email" required value={addForm.email} onChange={(e) => setAddForm({...addForm, email: e.target.value})} style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--admin-border)' }} />
+                  <input type="email" required value={addForm.email} onChange={(e) => setAddForm({...addForm, email: e.target.value})} style={{ width: '100%', boxSizing: 'border-box', padding: '10px', borderRadius: '8px', border: '1px solid var(--admin-border)' }} />
                 </label>
 
                 <label style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '14px', fontWeight: '500' }}>
                   Password *
-                  <input type="password" required minLength={6} value={addForm.password} onChange={(e) => setAddForm({...addForm, password: e.target.value})} style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--admin-border)' }} />
+                  <input type="password" required minLength={6} value={addForm.password} onChange={(e) => setAddForm({...addForm, password: e.target.value})} style={{ width: '100%', boxSizing: 'border-box', padding: '10px', borderRadius: '8px', border: '1px solid var(--admin-border)' }} />
                 </label>
               </div>
 
               <label style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '14px', fontWeight: '500' }}>
                 Full Name *
-                <input type="text" required value={addForm.full_name} onChange={(e) => setAddForm({...addForm, full_name: e.target.value})} style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--admin-border)' }} />
+                <input type="text" required value={addForm.full_name} onChange={(e) => setAddForm({...addForm, full_name: e.target.value})} style={{ width: '100%', boxSizing: 'border-box', padding: '10px', borderRadius: '8px', border: '1px solid var(--admin-border)' }} />
               </label>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                 <label style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '14px', fontWeight: '500' }}>
                   Employee Code
-                  <input type="text" placeholder="e.g. AD001" value={addForm.employee_code} onChange={(e) => setAddForm({...addForm, employee_code: e.target.value})} style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--admin-border)' }} />
+                  <input type="text" placeholder="e.g. AD001" value={addForm.employee_code} onChange={(e) => setAddForm({...addForm, employee_code: e.target.value})} style={{ width: '100%', boxSizing: 'border-box', padding: '10px', borderRadius: '8px', border: '1px solid var(--admin-border)' }} />
                 </label>
 
                 <label style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '14px', fontWeight: '500' }}>
                   Designation
-                  <input type="text" placeholder="e.g. Developer" value={addForm.designation} onChange={(e) => setAddForm({...addForm, designation: e.target.value})} style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--admin-border)' }} />
+                  <input type="text" placeholder="e.g. Developer" value={addForm.designation} onChange={(e) => setAddForm({...addForm, designation: e.target.value})} style={{ width: '100%', boxSizing: 'border-box', padding: '10px', borderRadius: '8px', border: '1px solid var(--admin-border)' }} />
                 </label>
               </div>
 
