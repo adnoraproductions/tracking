@@ -224,12 +224,19 @@ export default function EmployeeDashboard() {
     return <div style={{display: 'flex', justifyContent: 'center', padding: '40px'}}><Loader2 className="spinner" size={32} /></div>;
   }
 
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good Morning';
+    if (hour < 17) return 'Good Afternoon';
+    return 'Good Evening';
+  };
+
   return (
     <>
       {/* Header Card */}
       <div className="emp-header-card">
         <div className="emp-header-top">
-          <span className="emp-greeting">Good Afternoon, {profile?.full_name}</span>
+          <span className="emp-greeting">{getGreeting()}, {profile?.full_name?.split(' ')[0]}</span>
           <div className={`emp-status-badge ${badgeColorClass}`}>
             {statusText === 'Working' && <span style={{width: '6px', height: '6px', backgroundColor: 'white', borderRadius: '50%'}}></span>}
             {statusText}

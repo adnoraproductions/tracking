@@ -214,3 +214,12 @@ a:active,
   transform: scale(0.95) !important;
   box-shadow: 0 0 0 rgba(0,0,0,0) !important;
 }
+
+/* Remove default mobile tap highlight and focus rings */
+* {
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0) !important;
+}
+
+*:focus, *:active {
+  outline: none !important;
+}
