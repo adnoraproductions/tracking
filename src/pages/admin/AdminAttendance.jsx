@@ -13,6 +13,12 @@ export default function AdminAttendance() {
   const [expandedRowId, setExpandedRowId] = useState(null);
   const [showCalendar, setShowCalendar] = useState(false);
   
+  // CSV Export Modal State
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [exportMonth, setExportMonth] = useState(new Date().getMonth() + 1);
+  const [exportYear, setExportYear] = useState(new Date().getFullYear());
+  const [isExporting, setIsExporting] = useState(false);
+  
   const isToday = format(selectedDate, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd');
 
   useEffect(() => {
@@ -74,61 +80,82 @@ export default function AdminAttendance() {
     return nameMatch || codeMatch || dateMatch;
   });
 
-  const exportToCSV = () => {
-    if (filteredLogs.length === 0) return;
 
-    const headers = ['Date', 'Employee Name', 'Employee Code', 'Status', 'First In', 'Last Out', 'Total Worked', 'Total Break'];
-    
-    const csvRows = [
-      headers.join(','),
-      ...filteredLogs.map(log => {
-        const date = format(new Date(log.date), 'dd MMM yyyy');
-        const name = log.profiles?.full_name || 'Unknown';
-        const code = log.profiles?.employee_code || '-';
-        const status = log.status.toUpperCase();
-        
-        let firstInStr = '-';
-        let lastOutStr = '-';
-        let calculatedWorkMins = log.total_work_minutes || 0;
+  const generateMonthlyCSV = async () => {
+    try {
+      setIsExporting(true);
+      
+      const startDateStr = format(new Date(exportYear, exportMonth - 1, 1), 'yyyy-MM-dd');
+      const endDateStr = format(new Date(exportYear, exportMonth, 0), 'yyyy-MM-dd');
 
-        if (log.work_sessions && log.work_sessions.length > 0) {
-          const sortedSessions = [...log.work_sessions].sort((a, b) => new Date(a.started_at) - new Date(b.started_at));
-          firstInStr = format(new Date(sortedSessions[0].started_at), 'hh:mm a');
+      // 1. Fetch all active profiles
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, full_name, employee_code, status')
+        .eq('status', 'active');
+      
+      if (profilesError) throw profilesError;
+
+      // 2. Fetch attendance_days for the month
+      const { data: attendanceData, error: attendanceError } = await supabase
+        .from('attendance_days')
+        .select('employee_id, status, total_work_minutes, total_break_minutes')
+        .gte('date', startDateStr)
+        .lte('date', endDateStr);
+
+      if (attendanceError) throw attendanceError;
+
+      // 3. Aggregate data
+      const headers = ['Employee Name', 'Employee Code', 'Total Days Present', 'Total Days Absent', 'Total Work Time', 'Total Break Time'];
+      
+      const formatDurationMins = (totalMins) => {
+        if (!totalMins) return '0h 0m';
+        const h = Math.floor(totalMins / 60);
+        const m = Math.floor(totalMins % 60);
+        return `${h}h ${m}m`;
+      };
+
+      const csvRows = [
+        headers.join(','),
+        ...profilesData.map(emp => {
+          const empLogs = attendanceData.filter(log => log.employee_id === emp.id);
           
-          const lastSession = sortedSessions[sortedSessions.length - 1];
-          if (lastSession.ended_at) {
-            lastOutStr = format(new Date(lastSession.ended_at), 'hh:mm a');
-          } else {
-            lastOutStr = 'Working...';
-          }
+          let presentCount = 0;
+          let absentCount = 0;
+          let totalWork = 0;
+          let totalBreak = 0;
 
-          if (calculatedWorkMins === 0) {
-            let rawMins = 0;
-            sortedSessions.forEach(ws => {
-               const end = ws.ended_at ? new Date(ws.ended_at) : new Date();
-               const start = new Date(ws.started_at);
-               rawMins += (end - start) / 60000;
-            });
-            calculatedWorkMins = Math.floor(rawMins);
-          }
-        }
+          empLogs.forEach(log => {
+            if (log.status === 'absent') {
+              absentCount++;
+            } else {
+              presentCount++; // counts present, late, field_work, half_day
+            }
+            totalWork += (log.total_work_minutes || 0);
+            totalBreak += (log.total_break_minutes || 0);
+          });
 
-        const totalWorked = formatDuration(calculatedWorkMins);
-        const totalBreak = formatDuration(log.total_break_minutes);
+          return `"${emp.full_name || 'Unknown'}","${emp.employee_code || '-'}","${presentCount}","${absentCount}","${formatDurationMins(totalWork)}","${formatDurationMins(totalBreak)}"`;
+        })
+      ];
 
-        return `"${date}","${name}","${code}","${status}","${firstInStr}","${lastOutStr}","${totalWorked}","${totalBreak}"`;
-      })
-    ];
-
-    const blob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement("a");
-    const url = URL.createObjectURL(blob);
-    link.setAttribute("href", url);
-    link.setAttribute("download", `attendance_logs_${format(new Date(), 'yyyyMMdd')}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+      const blob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement("a");
+      const url = URL.createObjectURL(blob);
+      link.setAttribute("href", url);
+      link.setAttribute("download", `monthly_attendance_summary_${exportYear}_${exportMonth.toString().padStart(2, '0')}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      setShowExportModal(false);
+    } catch (err) {
+      console.error(err);
+      setError('Failed to generate monthly CSV');
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   if (loading) {
@@ -143,7 +170,7 @@ export default function AdminAttendance() {
             <h1>Daily Attendance Logs</h1>
             <p>View employee attendance records for a specific day.</p>
           </div>
-          <button className="admin-btn secondary" onClick={exportToCSV}>
+          <button className="admin-btn secondary" onClick={() => setShowExportModal(true)}>
             <Download size={16} />
             Export CSV
           </button>
@@ -384,6 +411,69 @@ export default function AdminAttendance() {
           </table>
         </div>
       </div>
+      {showExportModal && (
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ maxWidth: '400px' }}>
+            <div className="modal-header">
+              <h2>Export Monthly CSV</h2>
+              <button className="modal-close" onClick={() => setShowExportModal(false)}>
+                <X size={24} />
+              </button>
+            </div>
+            
+            <div className="modal-body">
+              <p style={{ marginBottom: '20px', color: 'var(--admin-text-muted)' }}>
+                Download a summarized CSV of employee attendance totals for a specific month.
+              </p>
+              
+              <div className="admin-form-group">
+                <label>Month</label>
+                <select value={exportMonth} onChange={e => setExportMonth(parseInt(e.target.value))}>
+                  <option value={1}>January</option>
+                  <option value={2}>February</option>
+                  <option value={3}>March</option>
+                  <option value={4}>April</option>
+                  <option value={5}>May</option>
+                  <option value={6}>June</option>
+                  <option value={7}>July</option>
+                  <option value={8}>August</option>
+                  <option value={9}>September</option>
+                  <option value={10}>October</option>
+                  <option value={11}>November</option>
+                  <option value={12}>December</option>
+                </select>
+              </div>
+
+              <div className="admin-form-group">
+                <label>Year</label>
+                <select value={exportYear} onChange={e => setExportYear(parseInt(e.target.value))}>
+                  <option value={new Date().getFullYear()}>{new Date().getFullYear()}</option>
+                  <option value={new Date().getFullYear() - 1}>{new Date().getFullYear() - 1}</option>
+                  <option value={new Date().getFullYear() - 2}>{new Date().getFullYear() - 2}</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="modal-footer">
+              <button 
+                className="admin-btn secondary" 
+                onClick={() => setShowExportModal(false)}
+                disabled={isExporting}
+              >
+                Cancel
+              </button>
+              <button 
+                className="admin-btn primary" 
+                onClick={generateMonthlyCSV}
+                disabled={isExporting}
+              >
+                {isExporting ? <Loader2 size={18} className="spinner" /> : <Download size={18} />}
+                {isExporting ? 'Generating...' : 'Download CSV'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
