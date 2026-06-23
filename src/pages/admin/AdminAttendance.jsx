@@ -412,49 +412,61 @@ export default function AdminAttendance() {
         </div>
       </div>
       {showExportModal && (
-        <div className="modal-overlay">
-          <div className="modal-content" style={{ maxWidth: '400px' }}>
-            <div className="modal-header">
-              <h2>Export Monthly CSV</h2>
-              <button className="modal-close" onClick={() => setShowExportModal(false)}>
-                <X size={24} />
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1000,
+          display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '20px'
+        }}>
+          <div style={{
+            backgroundColor: 'var(--admin-card-bg)', borderRadius: '24px',
+            width: '100%', maxWidth: '450px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)'
+          }}>
+            <div style={{ padding: '24px', borderBottom: '1px solid var(--admin-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h2 style={{ margin: 0, fontSize: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Download size={20} color="var(--admin-primary)" />
+                Export Monthly CSV
+              </h2>
+              <button onClick={() => setShowExportModal(false)} style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}>
+                <X size={24} color="var(--admin-text-muted)" />
               </button>
             </div>
             
-            <div className="modal-body">
-              <p style={{ marginBottom: '20px', color: 'var(--admin-text-muted)' }}>
+            <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <p style={{ margin: 0, fontSize: '14px', color: 'var(--admin-text-muted)' }}>
                 Download a summarized CSV of employee attendance totals for a specific month.
               </p>
               
-              <div className="admin-form-group">
-                <label>Month</label>
-                <select value={exportMonth} onChange={e => setExportMonth(parseInt(e.target.value))}>
-                  <option value={1}>January</option>
-                  <option value={2}>February</option>
-                  <option value={3}>March</option>
-                  <option value={4}>April</option>
-                  <option value={5}>May</option>
-                  <option value={6}>June</option>
-                  <option value={7}>July</option>
-                  <option value={8}>August</option>
-                  <option value={9}>September</option>
-                  <option value={10}>October</option>
-                  <option value={11}>November</option>
-                  <option value={12}>December</option>
-                </select>
-              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                <label style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '14px', fontWeight: '500' }}>
+                  Month
+                  <select value={exportMonth} onChange={e => setExportMonth(parseInt(e.target.value))} style={{ width: '100%', boxSizing: 'border-box', padding: '10px', borderRadius: '8px', border: '1px solid var(--admin-border)', outline: 'none' }}>
+                    <option value={1}>January</option>
+                    <option value={2}>February</option>
+                    <option value={3}>March</option>
+                    <option value={4}>April</option>
+                    <option value={5}>May</option>
+                    <option value={6}>June</option>
+                    <option value={7}>July</option>
+                    <option value={8}>August</option>
+                    <option value={9}>September</option>
+                    <option value={10}>October</option>
+                    <option value={11}>November</option>
+                    <option value={12}>December</option>
+                  </select>
+                </label>
 
-              <div className="admin-form-group">
-                <label>Year</label>
-                <select value={exportYear} onChange={e => setExportYear(parseInt(e.target.value))}>
-                  <option value={new Date().getFullYear()}>{new Date().getFullYear()}</option>
-                  <option value={new Date().getFullYear() - 1}>{new Date().getFullYear() - 1}</option>
-                  <option value={new Date().getFullYear() - 2}>{new Date().getFullYear() - 2}</option>
-                </select>
+                <label style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '14px', fontWeight: '500' }}>
+                  Year
+                  <select value={exportYear} onChange={e => setExportYear(parseInt(e.target.value))} style={{ width: '100%', boxSizing: 'border-box', padding: '10px', borderRadius: '8px', border: '1px solid var(--admin-border)', outline: 'none' }}>
+                    <option value={new Date().getFullYear()}>{new Date().getFullYear()}</option>
+                    <option value={new Date().getFullYear() - 1}>{new Date().getFullYear() - 1}</option>
+                    <option value={new Date().getFullYear() - 2}>{new Date().getFullYear() - 2}</option>
+                  </select>
+                </label>
               </div>
             </div>
 
-            <div className="modal-footer">
+            <div style={{ padding: '16px 24px', borderTop: '1px solid var(--admin-border)', display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
               <button 
                 className="admin-btn secondary" 
                 onClick={() => setShowExportModal(false)}
