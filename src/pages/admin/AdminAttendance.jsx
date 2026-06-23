@@ -519,7 +519,7 @@ export default function AdminAttendance() {
                                           
                                           {/* Show related correction requests */}
                                           {log.attendance_corrections && log.attendance_corrections
-                                            .filter(c => Math.abs(new Date(c.created_at).getTime() - new Date(evt.timestamp).getTime()) < 10000)
+                                            .filter(c => Math.abs(new Date(c.created_at).getTime() - new Date(evt.timestamp).getTime()) < 60000)
                                             .map(c => (
                                               <div key={c.id} style={{ marginTop: '8px', padding: '8px', backgroundColor: '#fff7ed', borderLeft: '3px solid #f97316', borderRadius: '4px', fontSize: '12px' }}>
                                                 <strong style={{ color: '#c2410c' }}>Override Request:</strong> <span style={{ color: '#9a3412' }}>{c.reason}</span>

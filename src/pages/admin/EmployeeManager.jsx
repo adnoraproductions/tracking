@@ -110,14 +110,17 @@ export default function EmployeeManager() {
       if (error) throw error;
       
       // Log the admin action so it appears in the timeline
-      if (data && data.work_session_id && data.attendance_day_id) {
-        await supabase.from('attendance_corrections').insert({
-          employee_id: emp.id,
-          attendance_day_id: data.attendance_day_id,
-          work_session_id: data.work_session_id,
-          status: 'resolved',
-          reason: 'Admin Force Check In'
-        });
+      if (data && data.work_session_id) {
+        const { data: wsData } = await supabase.from('work_sessions').select('attendance_day_id').eq('id', data.work_session_id).single();
+        if (wsData) {
+          await supabase.from('attendance_corrections').insert({
+            employee_id: emp.id,
+            attendance_day_id: wsData.attendance_day_id,
+            work_session_id: data.work_session_id,
+            status: 'resolved',
+            reason: 'Admin Force Check In'
+          });
+        }
       }
       
       alert(`Successfully started office session for ${emp.full_name}`);
