@@ -97,7 +97,7 @@ export default function EmployeeManager() {
         
         if (rpcError) {
           console.error("Password update failed", rpcError);
-          alert('Profile updated, but password change failed! Make sure you have run the required SQL function in your Supabase dashboard.');
+          alert(`Password change failed: ${rpcError.message}. Did you run the SQL function?`);
         } else {
           alert('Profile and password updated successfully!');
         }
