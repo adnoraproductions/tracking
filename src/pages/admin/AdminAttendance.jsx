@@ -10,7 +10,7 @@ export default function AdminAttendance() {
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [expandedRows, setExpandedRows] = useState({});
+  const [expandedRowId, setExpandedRowId] = useState(null);
   const [showCalendar, setShowCalendar] = useState(false);
   
   const isToday = format(selectedDate, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd');
@@ -271,17 +271,13 @@ export default function AdminAttendance() {
                     }
                   }
 
-                  const isExpanded = !!expandedRows[log.id];
+                  const isExpanded = expandedRowId === log.id;
                   const handleToggle = () => {
-                    setExpandedRows(prev => {
-                      const next = { ...prev };
-                      if (next[log.id]) {
-                        delete next[log.id];
-                      } else {
-                        next[log.id] = true;
-                      }
-                      return next;
-                    });
+                    if (isExpanded) {
+                      setExpandedRowId(null);
+                    } else {
+                      setExpandedRowId(log.id);
+                    }
                   };
 
                   return (
