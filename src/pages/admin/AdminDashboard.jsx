@@ -53,11 +53,15 @@ export default function AdminDashboard() {
         .eq('status', 'pending')
         .order('created_at', { ascending: false });
 
-      if (correctionsError) throw correctionsError;
-      setPendingRequests(correctionsData || []);
+      if (correctionsError) {
+        console.error("Failed to fetch corrections:", correctionsError);
+        setPendingRequests([]);
+      } else {
+        setPendingRequests(correctionsData || []);
+      }
 
     } catch (err) {
-      console.error(err);
+      console.error("Fatal error fetching live data:", err);
       setError('Failed to fetch live data');
     } finally {
       setLoading(false);
