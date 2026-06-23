@@ -272,13 +272,21 @@ export default function AdminAttendance() {
                   }
 
                   const isExpanded = !!expandedRows[log.id];
-                  const toggleRow = () => {
-                    setExpandedRows(prev => ({ ...prev, [log.id]: !prev[log.id] }));
+                  const handleToggle = () => {
+                    setExpandedRows(prev => {
+                      const next = { ...prev };
+                      if (next[log.id]) {
+                        delete next[log.id];
+                      } else {
+                        next[log.id] = true;
+                      }
+                      return next;
+                    });
                   };
 
                   return (
                     <React.Fragment key={log.id}>
-                      <tr onClick={toggleRow} style={{ cursor: 'pointer', backgroundColor: isExpanded ? '#f9fafb' : 'transparent' }}>
+                      <tr onClick={handleToggle} style={{ cursor: 'pointer', backgroundColor: isExpanded ? '#f9fafb' : 'transparent' }}>
                         <td style={{ textAlign: 'center', color: 'var(--admin-text-muted)' }}>
                           {isExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
                         </td>
@@ -303,14 +311,7 @@ export default function AdminAttendance() {
                       {isExpanded && log.attendance_events && log.attendance_events.length > 0 && (
                         <tr>
                           <td colSpan="7" style={{ padding: '0', backgroundColor: '#f9fafb' }}>
-                            <div style={{ padding: '24px', position: 'relative', borderTop: '1px solid var(--admin-border)', borderBottom: '2px solid var(--admin-border)' }}>
-                              <button 
-                                onClick={(e) => { e.stopPropagation(); toggleRow(); }} 
-                                style={{ position: 'absolute', top: '16px', right: '16px', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--admin-text-muted)', padding: '4px' }}
-                                title="Close Details"
-                              >
-                                <X size={20} />
-                              </button>
+                            <div style={{ padding: '24px', borderTop: '1px solid var(--admin-border)', borderBottom: '2px solid var(--admin-border)' }}>
                               <h4 style={{ margin: '0 0 16px 0', fontSize: '14px', color: 'var(--admin-text-dark)' }}>Detailed Timeline Log</h4>
                               <div style={{ display: 'flex', flexDirection: 'column' }}>
                               {log.attendance_events
