@@ -527,5 +527,17 @@ body {
 
   .admin-table td > div {
     text-align: right;
+    position: relative;
+    z-index: 2;
+  }
+
+  .admin-table td[data-label="Actions"] {
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 12px;
+  }
+
+  .admin-table td[data-label="Actions"]::before {
+    margin-right: 0;
   }
 }
