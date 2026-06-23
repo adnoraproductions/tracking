@@ -278,15 +278,20 @@ export default function EmployeeManager() {
                         />
                       </td>
                       <td data-label="Role">
-                        <select 
-                          className="admin-input"
-                          value={editForm.role} 
-                          onChange={e => setEditForm({...editForm, role: e.target.value})}
-                          style={{ width: '100%', padding: '8px', border: '1px solid var(--admin-border)', borderRadius: '8px' }}
-                        >
-                          <option value="employee">Employee</option>
-                          <option value="admin">Admin</option>
-                        </select>
+                        <div style={{ display: 'flex', backgroundColor: '#f3f4f6', borderRadius: '8px', padding: '4px' }}>
+                          <button 
+                            onClick={() => setEditForm({...editForm, role: 'employee'})}
+                            style={{ flex: 1, padding: '6px', borderRadius: '6px', border: 'none', backgroundColor: editForm.role === 'employee' ? 'white' : 'transparent', color: editForm.role === 'employee' ? 'var(--admin-text-dark)' : 'var(--admin-text-muted)', fontWeight: editForm.role === 'employee' ? '600' : '500', boxShadow: editForm.role === 'employee' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none', cursor: 'pointer', transition: 'all 0.2s', fontSize: '13px' }}
+                          >
+                            Employee
+                          </button>
+                          <button 
+                            onClick={() => setEditForm({...editForm, role: 'admin'})}
+                            style={{ flex: 1, padding: '6px', borderRadius: '6px', border: 'none', backgroundColor: editForm.role === 'admin' ? 'white' : 'transparent', color: editForm.role === 'admin' ? 'var(--admin-text-dark)' : 'var(--admin-text-muted)', fontWeight: editForm.role === 'admin' ? '600' : '500', boxShadow: editForm.role === 'admin' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none', cursor: 'pointer', transition: 'all 0.2s', fontSize: '13px' }}
+                          >
+                            Admin
+                          </button>
+                        </div>
                       </td>
                       <td data-label="Joined">
                         <input 
