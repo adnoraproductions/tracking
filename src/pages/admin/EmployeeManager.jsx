@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase/client';
 import { createClient } from '@supabase/supabase-js';
-import { Loader2, Edit2, X, Plus, UserPlus, Trash2, Power, Settings, Smartphone } from 'lucide-react';
+import { Loader2, Edit2, X, Plus, UserPlus, Trash2, Power, Settings, Smartphone, LogOut } from 'lucide-react';
 
 // Create a secondary client specifically for signing up users so it doesn't overwrite the admin's session
 const adminAuthClient = createClient(
@@ -440,7 +440,7 @@ export default function EmployeeManager() {
                               title="Force Check Out"
                               style={{ padding: '6px', border: 'none', color: '#dc2626', pointerEvents: 'auto', backgroundColor: '#fee2e2' }}
                             >
-                              <Power size={16} style={{ pointerEvents: 'none' }} />
+                              <LogOut size={16} style={{ pointerEvents: 'none' }} />
                             </button>
                           )}
                           <button 
