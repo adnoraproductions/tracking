@@ -393,7 +393,7 @@ export default function EmployeeManager() {
                       </td>
                       <td data-label="Joined">{emp.joined_date ? new Date(emp.joined_date).toLocaleDateString() : new Date(emp.created_at).toLocaleDateString()}</td>
                       <td data-label="Actions" style={{ textAlign: 'right' }}>
-                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '4px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '4px', position: 'relative', zIndex: 50 }}>
                           <button 
                             type="button"
                             onClick={() => handleToggleStatus(emp)}

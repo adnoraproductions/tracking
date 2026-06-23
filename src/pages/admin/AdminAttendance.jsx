@@ -273,7 +273,6 @@ export default function AdminAttendance() {
 
                   const isExpanded = expandedRowId === log.id;
                   const handleToggle = (e) => {
-                    e.preventDefault();
                     e.stopPropagation();
                     if (isExpanded) {
                       setExpandedRowId(null);
@@ -284,7 +283,7 @@ export default function AdminAttendance() {
 
                   return (
                     <React.Fragment key={log.id}>
-                      <tr onClick={handleToggle} style={{ cursor: 'pointer', backgroundColor: isExpanded ? '#f9fafb' : 'transparent' }}>
+                      <tr onClick={handleToggle} style={{ cursor: 'pointer', backgroundColor: isExpanded ? '#f9fafb' : 'transparent', position: 'relative', zIndex: 50 }}>
                         <td style={{ textAlign: 'center', color: 'var(--admin-text-muted)' }}>
                           {isExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
                         </td>
