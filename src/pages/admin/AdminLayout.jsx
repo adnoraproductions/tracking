@@ -76,6 +76,9 @@ export default function AdminLayout() {
         <PageTransition>
           <Outlet />
         </PageTransition>
+        
+        {/* Foolproof spacer for mobile nav bar to ensure scrollability */}
+        <div className="mobile-nav-spacer" style={{ height: '120px', width: '100%', display: 'block' }}></div>
       </main>
     </div>
   );
