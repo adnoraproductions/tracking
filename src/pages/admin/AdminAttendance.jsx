@@ -351,14 +351,14 @@ export default function AdminAttendance() {
       )}
 
       <div className="admin-card">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-          <h2>Attendance History</h2>
+        <div className="admin-table-header" style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+          <h2 style={{ margin: 0 }}>Attendance History</h2>
           
-          <div style={{ position: 'relative', width: '300px' }}>
+          <div style={{ position: 'relative', flex: '1', minWidth: '200px', maxWidth: '300px' }}>
             <Search size={16} style={{ position: 'absolute', left: '12px', top: '14px', color: 'var(--admin-text-muted)' }} />
             <input 
               type="text" 
-              placeholder="Search by name, ID, or YYYY-MM-DD..."
+              placeholder="Search by name, ID, or Date..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               style={{ width: '100%', padding: '12px 16px 12px 36px', border: '1px solid var(--admin-border)', borderRadius: '12px', outline: 'none' }}
