@@ -13,7 +13,7 @@ export default function AdminLayout() {
       {/* Force override for mobile layout in case of CSS cache */}
       <style>{`
         @media (max-width: 768px) {
-          .admin-sidebar { position: relative !important; top: auto !important; height: auto !important; z-index: 1 !important; }
+          .admin-sidebar { position: relative !important; top: auto !important; height: auto !important; z-index: 100 !important; }
           .admin-main { margin-top: 0 !important; padding-bottom: 100px !important; }
           .admin-page-header { flex-direction: column !important; align-items: flex-start !important; gap: 16px !important; }
           
