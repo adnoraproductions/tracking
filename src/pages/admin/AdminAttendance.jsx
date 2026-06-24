@@ -392,23 +392,37 @@ export default function AdminAttendance() {
                   let lastOutStr = '-';
                   
                   let calculatedWorkMins = log.total_work_minutes || 0;
+                  let calculatedBreakMins = log.total_break_minutes || 0;
 
                   if (log.work_sessions && log.work_sessions.length > 0) {
-                    // Sort sessions by started_at
                     const sortedSessions = [...log.work_sessions].sort((a, b) => new Date(a.started_at) - new Date(b.started_at));
-                    
                     firstInStr = format(new Date(sortedSessions[0].started_at), 'hh:mm a');
                     
-                    // For last out, check if the last session has an ended_at
                     const lastSession = sortedSessions[sortedSessions.length - 1];
                     if (lastSession.ended_at) {
                       lastOutStr = format(new Date(lastSession.ended_at), 'hh:mm a');
                     } else {
                       lastOutStr = 'Working...';
+                      
+                      // Calculate live durations for active session
+                      const sortedEvents = [...(log.attendance_events || [])].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+                      const latestEvent = sortedEvents[0];
+                      
+                      const isCurrentlyOnBreak = latestEvent && latestEvent.event_type === 'break_out';
+                      const activeEndTime = isCurrentlyOnBreak ? new Date(latestEvent.timestamp) : new Date();
+                      
+                      const activeGrossMins = (activeEndTime - new Date(lastSession.started_at)) / 60000;
+                      calculatedWorkMins += activeGrossMins;
+                      
+                      if (isCurrentlyOnBreak) {
+                        calculatedBreakMins += (new Date() - new Date(latestEvent.timestamp)) / 60000;
+                      }
                     }
 
-                    // Fallback calculation for corrupted old 0 records
-                    if (calculatedWorkMins === 0) {
+                    // Fallback for completely corrupted old records
+                    if (calculatedWorkMins < 0 && !lastSession.ended_at) {
+                       // Do nothing, the live calculation above fixed it
+                    } else if (calculatedWorkMins === 0 && lastSession.ended_at) {
                       let rawMins = 0;
                       sortedSessions.forEach(ws => {
                          const end = ws.ended_at ? new Date(ws.ended_at) : new Date();
@@ -418,6 +432,9 @@ export default function AdminAttendance() {
                       calculatedWorkMins = Math.floor(rawMins);
                     }
                   }
+                  
+                  calculatedWorkMins = Math.max(0, Math.floor(calculatedWorkMins));
+                  calculatedBreakMins = Math.max(0, Math.floor(calculatedBreakMins));
 
                   const isExpanded = expandedRowId === log.id;
                   const handleToggle = (e) => {
@@ -450,7 +467,7 @@ export default function AdminAttendance() {
                           {formatDuration(calculatedWorkMins)}
                         </td>
                         <td data-label="Total Break" style={{ color: 'var(--admin-text-muted)' }}>
-                          {formatDuration(log.total_break_minutes)}
+                          {formatDuration(calculatedBreakMins)}
                         </td>
                       </tr>
                       {isExpanded && log.attendance_events && log.attendance_events.length > 0 && (
