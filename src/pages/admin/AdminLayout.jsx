@@ -14,7 +14,7 @@ export default function AdminLayout() {
       <style>{`
         @media (max-width: 768px) {
           .admin-sidebar { position: relative !important; top: auto !important; height: auto !important; z-index: 1 !important; }
-          .admin-main { margin-top: 0 !important; }
+          .admin-main { margin-top: 0 !important; padding-bottom: 120px !important; }
           .admin-page-header { flex-direction: column !important; align-items: flex-start !important; gap: 16px !important; }
         }
       `}</style>
