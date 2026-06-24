@@ -368,8 +368,8 @@ body {
   
   .admin-sidebar {
     width: 100%;
-    position: sticky;
-    top: 0;
+    position: relative;
+    top: auto;
     height: auto;
     border-right: none;
     border-bottom: none;
@@ -454,6 +454,12 @@ body {
     padding-bottom: 120px; /* Space for fixed bottom nav */
   }
   
+  .admin-page-header {
+    flex-direction: column;
+    gap: 16px;
+    align-items: flex-start !important;
+  }
+
   .admin-page-header h1 {
     font-size: 24px;
   }
