@@ -14,8 +14,31 @@ export default function AdminLayout() {
       <style>{`
         @media (max-width: 768px) {
           .admin-sidebar { position: relative !important; top: auto !important; height: auto !important; z-index: 1 !important; }
-          .admin-main { margin-top: 0 !important; padding-bottom: 120px !important; }
+          .admin-main { margin-top: 0 !important; padding-bottom: 100px !important; }
           .admin-page-header { flex-direction: column !important; align-items: flex-start !important; gap: 16px !important; }
+          
+          /* Change floating pill to standard docked bottom tab bar to stop it from obscuring content */
+          .admin-nav {
+            position: fixed !important;
+            bottom: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            border-radius: 0 !important;
+            max-width: 100% !important;
+            margin: 0 !important;
+            padding: 8px 12px 16px 12px !important; /* safe area padding */
+            background-color: #ffffff !important;
+            border: none !important;
+            border-top: 1px solid #e5e7eb !important;
+            box-shadow: 0 -4px 16px rgba(0,0,0,0.05) !important;
+            z-index: 100 !important;
+          }
+          
+          .admin-nav-item.active {
+            background-color: #f3f4f6 !important;
+            box-shadow: none !important;
+            border: 1px solid transparent !important;
+          }
         }
       `}</style>
 
