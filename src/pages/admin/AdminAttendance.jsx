@@ -485,37 +485,44 @@ export default function AdminAttendance() {
                                     else if (evt.event_type === 'session_ended' || evt.event_type === 'day_ended') badgeText = 'OUT';
 
                                     return (
-                                      <div key={evt.id} style={{ display: 'flex', alignItems: 'flex-start', marginBottom: '16px', position: 'relative' }}>
-                                        {/* Vertical line connector */}
-                                        {idx < arr.length - 1 && (
-                                          <div style={{ position: 'absolute', top: '24px', bottom: '-16px', left: '42px', width: '2px', backgroundColor: 'var(--admin-border)', zIndex: 0 }}></div>
-                                        )}
-                                        
-                                        <div style={{ 
-                                          backgroundColor: isIn ? '#10b981' : isOut ? '#ef4444' : '#6b7280', 
-                                          color: 'white', fontSize: '11px', fontWeight: '700', padding: '4px 0', 
-                                          borderRadius: '4px', width: '84px', textAlign: 'center', marginRight: '16px', zIndex: 1 
-                                        }}>
-                                          {badgeText}
+                                      <div key={evt.id} style={{ display: 'flex', alignItems: 'flex-start', marginBottom: '24px', position: 'relative' }}>
+                                        {/* Timeline Left Column (Line + Dot) */}
+                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginRight: '16px', marginTop: '4px', width: '12px' }}>
+                                          <div style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: isIn ? '#10b981' : isOut ? '#ef4444' : '#6b7280', zIndex: 2, position: 'relative', boxShadow: `0 0 0 3px ${isIn ? '#d1fae5' : isOut ? '#fee2e2' : '#f3f4f6'}` }}></div>
+                                          {idx < arr.length - 1 && (
+                                            <div style={{ position: 'absolute', top: '14px', bottom: '-24px', left: '5px', width: '2px', backgroundColor: '#e5e7eb', zIndex: 1 }}></div>
+                                          )}
                                         </div>
-                                        <div>
-                                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                                            <h4 style={{ margin: 0, fontSize: '14px', color: 'var(--admin-text-dark)' }}>{timeStr}</h4>
+                                        
+                                        {/* Timeline Content */}
+                                        <div style={{ flex: 1, minWidth: 0 }}>
+                                          <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: '6px' }}>
+                                            <h4 style={{ margin: 0, fontSize: '14px', color: 'var(--admin-text-dark)', fontWeight: '600' }}>{timeStr}</h4>
+                                            
+                                            <span style={{ 
+                                              backgroundColor: isIn ? '#d1fae5' : isOut ? '#fee2e2' : '#f3f4f6', 
+                                              color: isIn ? '#059669' : isOut ? '#dc2626' : '#4b5563', 
+                                              fontSize: '10px', fontWeight: '700', padding: '2px 8px', 
+                                              borderRadius: '999px', letterSpacing: '0.5px'
+                                            }}>
+                                              {badgeText}
+                                            </span>
+
                                             {evt.latitude && evt.longitude && (
                                               <a 
                                                 href={`https://www.google.com/maps/search/?api=1&query=${evt.latitude},${evt.longitude}`} 
                                                 target="_blank" 
                                                 rel="noopener noreferrer"
                                                 title="View on Google Maps"
-                                                style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: 'var(--admin-primary)', textDecoration: 'none', backgroundColor: '#e0e7ff', padding: '2px 6px', borderRadius: '4px' }}
+                                                style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: 'var(--admin-primary)', textDecoration: 'none', backgroundColor: '#eef2ff', padding: '2px 8px', borderRadius: '999px', fontWeight: '500' }}
                                               >
-                                                <MapPin size={12} /> Map
+                                                <MapPin size={10} /> Map
                                               </a>
                                             )}
                                           </div>
-                                          <p style={{ margin: 0, fontSize: '12px', color: 'var(--admin-text-muted)' }}>{durationStr}</p>
-                                          </div>
+                                          <p style={{ margin: 0, fontSize: '13px', color: 'var(--admin-text-muted)', lineHeight: '1.4' }}>{durationStr}</p>
                                         </div>
+                                      </div>
                                     );
                                   })
                                 }
