@@ -454,9 +454,9 @@ export default function AdminAttendance() {
                         </td>
                       </tr>
                       {isExpanded && log.attendance_events && log.attendance_events.length > 0 && (
-                        <tr>
-                          <td colSpan="7" style={{ padding: '0', backgroundColor: '#f9fafb' }}>
-                            <div style={{ padding: '24px', borderTop: '1px solid var(--admin-border)', borderBottom: '2px solid var(--admin-border)' }}>
+                        <tr style={{ padding: 0, border: 'none', backgroundColor: 'transparent' }}>
+                          <td colSpan="7" style={{ padding: '0', backgroundColor: 'transparent' }}>
+                            <div style={{ padding: '24px', backgroundColor: '#f9fafb', borderRadius: 'var(--admin-radius-lg)', border: '1px solid var(--admin-border)' }}>
                               <h4 style={{ margin: '0 0 16px 0', fontSize: '14px', color: 'var(--admin-text-dark)' }}>Detailed Timeline Log</h4>
                               <div style={{ display: 'flex', flexDirection: 'column' }}>
                               {log.attendance_events
