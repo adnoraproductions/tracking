@@ -288,16 +288,14 @@ export default function AdminAttendance() {
   return (
     <div>
       <div className="admin-page-header">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-          <div>
-            <h1>Daily Attendance Logs</h1>
-            <p>View employee attendance records for a specific day.</p>
-          </div>
-          <button className="admin-btn secondary" onClick={() => setShowExportModal(true)}>
-            <Download size={16} />
-            Export Excel
-          </button>
+        <div>
+          <h1>Daily Attendance Logs</h1>
+          <p>View employee attendance records for a specific day.</p>
         </div>
+        <button className="admin-btn secondary" onClick={() => setShowExportModal(true)}>
+          <Download size={16} />
+          Export Excel
+        </button>
       </div>
 
       <div style={{ 
