@@ -292,7 +292,7 @@ export default function AdminAttendance() {
           <h1>Daily Attendance Logs</h1>
           <p>View employee attendance records for a specific day.</p>
         </div>
-        <button className="admin-btn secondary" onClick={() => setShowExportModal(true)}>
+        <button className="admin-btn secondary" onClick={() => setShowExportModal(true)} style={{ marginTop: '16px' }}>
           <Download size={16} />
           Export Excel
         </button>
