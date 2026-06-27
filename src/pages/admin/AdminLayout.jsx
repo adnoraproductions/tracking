@@ -1,7 +1,7 @@
 import React from 'react';
 import { Outlet, NavLink } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { LayoutDashboard, Users, MapPin, LogOut, CalendarClock } from 'lucide-react';
+import { LayoutDashboard, Users, MapPin, LogOut, CalendarClock, UserCheck } from 'lucide-react';
 import PageTransition from '../../components/PageTransition';
 import './Admin.css';
 
@@ -68,6 +68,14 @@ export default function AdminLayout() {
           >
             <CalendarClock size={20} />
             Attendance Logs
+          </NavLink>
+
+          <NavLink 
+            to="/employee" 
+            className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
+          >
+            <UserCheck size={20} />
+            My Attendance
           </NavLink>
 
           <NavLink 

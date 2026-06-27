@@ -49,7 +49,7 @@ export default function App() {
           </Route>
 
           {/* Employee Protected Routes */}
-          <Route element={<ProtectedRoute allowedRoles={[USER_ROLES.EMPLOYEE]} />}>
+          <Route element={<ProtectedRoute allowedRoles={[USER_ROLES.EMPLOYEE, USER_ROLES.ADMIN]} />}>
             <Route path="/employee" element={<EmployeeLayout />}>
               <Route index element={<EmployeeDashboard />} />
               <Route path="attendance" element={<EmployeeAttendance />} />
