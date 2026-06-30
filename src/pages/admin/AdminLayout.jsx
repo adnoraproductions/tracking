@@ -32,8 +32,6 @@ export default function AdminLayout() {
           .admin-sidebar { position: relative !important; top: auto !important; height: auto !important; z-index: 100 !important; border-right: none !important; box-shadow: none !important; }
           .admin-main { margin-top: 60px !important; margin-left: 0 !important; padding: 20px !important; padding-bottom: 100px !important; }
           .admin-page-header { flex-direction: column !important; align-items: flex-start !important; gap: 16px !important; margin-bottom: 24px !important; }
-          
-          .desktop-text { display: none !important; }
 
           /* Consistent Mobile Top Header */
           .admin-sidebar-header {
@@ -128,7 +126,7 @@ export default function AdminLayout() {
               title="My Attendance"
             >
               <UserCheck size={14} />
-              <span className="desktop-text">My Attendance</span>
+              <span>My Attendance</span>
             </button>
           </div>
         </div>
