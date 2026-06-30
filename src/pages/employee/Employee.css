@@ -53,9 +53,10 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: var(--skeuo-surface);
-  box-shadow: 0 4px 12px var(--skeuo-shadow-light);
-  border-bottom: 2px solid var(--skeuo-highlight);
+  background-color: #1e293b;
+  background-image: linear-gradient(145deg, #334155, #0f172a);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+  border-bottom: 1px solid #475569;
 }
 
 .emp-top-header h2 {

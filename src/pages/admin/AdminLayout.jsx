@@ -42,9 +42,10 @@ export default function AdminLayout() {
             width: 100% !important;
             z-index: 100 !important;
             padding: 16px 20px !important;
-            background-color: var(--skeuo-surface) !important;
-            box-shadow: 0 4px 12px var(--skeuo-shadow-light) !important;
-            border-bottom: 2px solid var(--skeuo-highlight) !important;
+            background-color: #1e293b !important;
+            background-image: linear-gradient(145deg, #334155, #0f172a) !important;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4) !important;
+            border-bottom: 1px solid #475569 !important;
             box-sizing: border-box !important;
             display: flex !important;
             justify-content: space-between !important;
