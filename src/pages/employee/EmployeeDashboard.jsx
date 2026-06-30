@@ -63,17 +63,18 @@ export default function EmployeeDashboard() {
 
       // 0.5 Device Binding Check
       let localDeviceId = null;
+      const generateId = () => (crypto.randomUUID ? crypto.randomUUID() : 'fallback-' + Math.random().toString(36).substring(2, 15));
+      
       try {
         localDeviceId = localStorage.getItem('device_id');
         if (!localDeviceId) {
-          localDeviceId = crypto.randomUUID();
+          localDeviceId = generateId();
           localStorage.setItem('device_id', localDeviceId);
         }
       } catch (err) {
         console.warn('localStorage is blocked by browser settings:', err);
-        // Provide a temporary random id so the app doesn't crash, 
-        // though device binding won't persist across reloads in this restricted environment
-        localDeviceId = "fallback-device-id-" + crypto.randomUUID();
+        // Provide a temporary random id so the app doesn't crash
+        localDeviceId = generateId();
       }
 
       let isDeviceValid = true;
@@ -531,26 +532,36 @@ export default function EmployeeDashboard() {
                 {!sessionState.activeSession ? (
                   <>
                     <button className="emp-btn-square" onClick={() => handleAction('start_office')} disabled={actionLoading}>
-                      <div style={{ backgroundColor: '#d1fae5', padding: '8px', borderRadius: '50%', color: 'var(--emp-primary)' }}><Briefcase size={20} /></div>
+                      <div style={{ backgroundColor: '#d1fae5', padding: '8px', borderRadius: '50%', color: 'var(--emp-primary)' }}>
+                        {actionLoading === 'start_office' ? <Loader2 className="spinner" size={20} /> : <Briefcase size={20} />}
+                      </div>
                       Office
                     </button>
                     <button className="emp-btn-square" onClick={() => handleAction('start_wfh')} disabled={actionLoading}>
-                      <div style={{ backgroundColor: '#e0e7ff', padding: '8px', borderRadius: '50%', color: '#4f46e5' }}><Home size={20} /></div>
+                      <div style={{ backgroundColor: '#e0e7ff', padding: '8px', borderRadius: '50%', color: '#4f46e5' }}>
+                        {actionLoading === 'start_wfh' ? <Loader2 className="spinner" size={20} /> : <Home size={20} />}
+                      </div>
                       WFH
                     </button>
                     <button className="emp-btn-square" onClick={() => handleAction('start_field_work')} disabled={actionLoading}>
-                      <div style={{ backgroundColor: '#fef3c7', padding: '8px', borderRadius: '50%', color: '#d97706' }}><MapPin size={20} /></div>
+                      <div style={{ backgroundColor: '#fef3c7', padding: '8px', borderRadius: '50%', color: '#d97706' }}>
+                        {actionLoading === 'start_field_work' ? <Loader2 className="spinner" size={20} /> : <MapPin size={20} />}
+                      </div>
                       Field
                     </button>
                   </>
                 ) : (
                   <>
                     <button className="emp-btn-square danger" onClick={() => handleAction('end')} disabled={actionLoading}>
-                       <div style={{ backgroundColor: '#fef2f2', padding: '8px', borderRadius: '50%', color: 'var(--emp-danger)' }}><Clock size={20} /></div>
+                       <div style={{ backgroundColor: '#fef2f2', padding: '8px', borderRadius: '50%', color: 'var(--emp-danger)' }}>
+                         {actionLoading === 'end' ? <Loader2 className="spinner" size={20} /> : <Clock size={20} />}
+                       </div>
                        Check Out
                     </button>
                     <button className={`emp-btn-square ${sessionState.activeSession.status === 'on_break' ? 'active' : ''}`} onClick={() => handleAction(sessionState.activeSession.status === 'on_break' ? 'break_in' : 'break_out')} disabled={actionLoading}>
-                       <div style={{ backgroundColor: sessionState.activeSession.status === 'on_break' ? 'rgba(255,255,255,0.2)' : '#fef3c7', padding: '8px', borderRadius: '50%', color: sessionState.activeSession.status === 'on_break' ? 'white' : '#f59e0b' }}><Clock size={20} /></div>
+                       <div style={{ backgroundColor: sessionState.activeSession.status === 'on_break' ? 'rgba(255,255,255,0.2)' : '#fef3c7', padding: '8px', borderRadius: '50%', color: sessionState.activeSession.status === 'on_break' ? 'white' : '#f59e0b' }}>
+                         {(actionLoading === 'break_in' || actionLoading === 'break_out') ? <Loader2 className="spinner" size={20} /> : <Clock size={20} />}
+                       </div>
                        {sessionState.activeSession.status === 'on_break' ? 'Resume Work' : 'Take Break'}
                     </button>
                   </>
