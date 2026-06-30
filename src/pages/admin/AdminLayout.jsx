@@ -125,13 +125,10 @@ export default function AdminLayout() {
             <button 
               onClick={() => navigate('/employee')}
               className="admin-header-portal-btn"
-              title="Employee Portal"
+              title="My Attendance"
             >
               <UserCheck size={14} />
-              <span className="desktop-text">Employee Portal</span>
-            </button>
-            <button onClick={signOut} className="admin-mobile-logout" title="Sign Out">
-              <LogOut size={20} />
+              <span className="desktop-text">My Attendance</span>
             </button>
           </div>
         </div>

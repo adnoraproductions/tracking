@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase/client';
-import { Loader2, Save } from 'lucide-react';
+import { Loader2, Save, LogOut } from 'lucide-react';
+import { useAuth } from '../../contexts/AuthContext';
 
 export default function OfficeSettings() {
+  const { signOut } = useAuth();
   const [office, setOffice] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -173,6 +175,19 @@ export default function OfficeSettings() {
             Save Settings
           </button>
         </form>
+      </div>
+      
+      {/* Sign Out Card */}
+      <div className="admin-card" style={{ backgroundColor: '#fef2f2', border: '1px solid #fecaca', cursor: 'pointer', marginTop: '24px', maxWidth: '600px', boxShadow: '4px 4px 10px rgba(239, 68, 68, 0.1), -4px -4px 10px rgba(255,255,255,0.8)', transition: 'all 0.15s' }} onClick={signOut}>
+        <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+          <div style={{ color: 'var(--admin-danger)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <LogOut size={24} />
+          </div>
+          <div>
+            <h3 style={{ margin: '0 0 4px 0', fontSize: '16px', color: 'var(--admin-danger)' }}>Sign Out</h3>
+            <p style={{ margin: 0, color: 'var(--admin-text-muted)', fontSize: '13px' }}>Securely log out of the admin panel</p>
+          </div>
+        </div>
       </div>
     </div>
   );
