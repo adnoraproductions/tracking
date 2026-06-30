@@ -42,10 +42,10 @@ export default function EmployeeSettings() {
     fetchStatus();
   }, [profile]);
 
-  const getStatusStyles = () => {
-    if (status === 'Working') return { backgroundColor: '#d1fae5', color: '#059669' };
-    if (status === 'On Break') return { backgroundColor: '#fef3c7', color: '#d97706' };
-    return { backgroundColor: '#f3f4f6', color: '#6b7280' };
+  const getStatusClass = () => {
+    if (status === 'Working') return 'emp-status-badge'; // default is green
+    if (status === 'On Break') return 'emp-status-badge break';
+    return 'emp-status-badge offline';
   };
 
   return (
@@ -67,7 +67,7 @@ export default function EmployeeSettings() {
               <p style={{ margin: 0, color: 'var(--emp-text-muted)', fontSize: '14px' }}>{profile?.designation || 'Employee'}</p>
             </div>
           </div>
-          <div className="emp-status-badge" style={getStatusStyles()}>
+          <div className={getStatusClass()}>
             {status}
           </div>
         </div>
@@ -87,7 +87,7 @@ export default function EmployeeSettings() {
       </div>
 
       {/* Sign Out Card */}
-      <div className="emp-settings-card" style={{ backgroundColor: '#fef2f2', border: '1px solid #fecaca', cursor: 'pointer' }} onClick={signOut}>
+      <div className="emp-settings-card danger" onClick={signOut}>
         <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
           <div style={{ color: 'var(--emp-danger)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <LogOut size={24} />

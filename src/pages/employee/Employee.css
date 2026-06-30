@@ -449,14 +449,25 @@ body {
 
 /* Settings Page */
 .emp-settings-card {
-  background-color: var(--glass-bg);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  border: 1px solid var(--glass-border);
+  background-color: var(--skeuo-surface);
+  border: 1px solid var(--skeuo-highlight);
   border-radius: var(--emp-radius-xl);
   padding: 24px;
   margin-bottom: 16px;
-  box-shadow: var(--glass-shadow);
+  box-shadow: var(--skeuo-outer);
+}
+
+.emp-settings-card.danger {
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  cursor: pointer;
+  box-shadow: 4px 4px 10px rgba(239, 68, 68, 0.1), -4px -4px 10px rgba(255,255,255,0.8);
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.emp-settings-card.danger:active {
+  box-shadow: inset 4px 4px 10px rgba(239, 68, 68, 0.1), inset -4px -4px 10px rgba(255,255,255,0.8);
+  transform: translateY(2px);
 }
 
 .emp-settings-header h1 {

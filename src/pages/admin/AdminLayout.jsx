@@ -13,9 +13,47 @@ export default function AdminLayout() {
       {/* Force override for mobile layout in case of CSS cache */}
       <style>{`
         @media (max-width: 768px) {
-          .admin-sidebar { position: relative !important; top: auto !important; height: auto !important; z-index: 100 !important; }
-          .admin-main { margin-top: 0 !important; padding-bottom: 100px !important; }
-          .admin-page-header { flex-direction: column !important; align-items: flex-start !important; gap: 16px !important; }
+          .admin-sidebar { position: relative !important; top: auto !important; height: auto !important; z-index: 100 !important; border-right: none !important; box-shadow: none !important; }
+          .admin-main { margin-top: 60px !important; margin-left: 0 !important; padding: 20px !important; padding-bottom: 100px !important; }
+          .admin-page-header { flex-direction: column !important; align-items: flex-start !important; gap: 16px !important; margin-bottom: 24px !important; }
+          
+          /* Consistent Mobile Top Header */
+          .admin-sidebar-header {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            width: 100% !important;
+            z-index: 100 !important;
+            padding: 16px 20px !important;
+            background-color: var(--skeuo-surface) !important;
+            box-shadow: 0 4px 12px var(--skeuo-shadow-light) !important;
+            border-bottom: 2px solid var(--skeuo-highlight) !important;
+            box-sizing: border-box !important;
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+          }
+
+          .admin-mobile-logout {
+            display: flex !important;
+            align-items: center !important;
+            gap: 6px !important;
+            background-color: #fef2f2 !important;
+            border: 1px solid #fecaca !important;
+            padding: 6px 12px !important;
+            border-radius: 999px !important;
+            font-size: 12px !important;
+            font-weight: bold !important;
+            color: var(--emp-danger) !important;
+            box-shadow: inset 2px 2px 4px rgba(255,255,255,0.8), 2px 2px 5px rgba(239, 68, 68, 0.2) !important;
+            cursor: pointer !important;
+          }
+          
+          /* Hide desktop footer on mobile */
+          .admin-sidebar-footer {
+            display: none !important;
+          }
           
           /* Floating Pill Nav Bar - Skeuomorphic */
           .admin-nav {

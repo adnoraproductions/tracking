@@ -19,8 +19,9 @@ export default function EmployeeLayout() {
             onClick={() => navigate('/admin')}
             style={{ 
               display: 'flex', alignItems: 'center', gap: '6px', 
-              backgroundColor: '#f3f4f6', border: 'none', padding: '6px 12px', 
+              backgroundColor: '#e2e6eb', border: '1px solid rgba(0,0,0,0.1)', padding: '6px 12px', 
               borderRadius: '999px', fontSize: '12px', fontWeight: 'bold', color: '#4b5563',
+              boxShadow: 'inset 2px 2px 4px rgba(255,255,255,0.8), 2px 2px 5px rgba(0,0,0,0.1)',
               cursor: 'pointer'
             }}
           >
