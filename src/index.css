@@ -1,26 +1,37 @@
 :root {
-  /* Glassmorphism Global Variables */
-  --glass-bg: rgba(255, 255, 255, 0.7);
-  --glass-border: rgba(255, 255, 255, 0.6);
-  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.05);
-  --glass-blur: blur(20px);
-  --glass-dark-bg: rgba(17, 24, 39, 0.65);
-  --glass-dark-border: rgba(255, 255, 255, 0.1);
+  /* Skeuomorphism Global Variables */
+  --skeuo-bg: #e2e6eb; /* Soft matte plastic background */
+  --skeuo-surface: #f0f3f6; /* Slightly lighter for raised elements */
+  
+  /* Lighting & Shadows */
+  --skeuo-highlight: rgba(255, 255, 255, 0.9);
+  --skeuo-shadow-light: rgba(163, 177, 198, 0.5); /* Soft, cool shadow */
+  --skeuo-shadow-dark: rgba(163, 177, 198, 0.7); /* Deep shadow */
+  
+  /* Standard Drop Shadow (Outset) */
+  --skeuo-outer: 6px 6px 12px var(--skeuo-shadow-light), 
+                 -6px -6px 12px var(--skeuo-highlight);
+                 
+  /* Standard Inner Shadow (Inset) */
+  --skeuo-inner: inset 4px 4px 8px var(--skeuo-shadow-dark), 
+                 inset -4px -4px 8px var(--skeuo-highlight);
+                 
+  /* Intensely Pressed State */
+  --skeuo-pressed: inset 6px 6px 12px var(--skeuo-shadow-dark), 
+                   inset -6px -6px 12px var(--skeuo-highlight);
+                   
+  --skeuo-radius-sm: 8px;
+  --skeuo-radius-md: 16px;
+  --skeuo-radius-lg: 24px;
 }
 
 body {
   margin: 0;
   font-family: 'Inter', system-ui, sans-serif;
-  background: linear-gradient(-45deg, #e0f2fe, #f3e8ff, #ede9fe, #dbeafe);
-  background-size: 400% 400%;
-  animation: gradientBG 15s ease infinite;
+  background-color: var(--skeuo-bg);
   min-height: 100vh;
-}
-
-@keyframes gradientBG {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
+  /* Add subtle grain/noise for realism */
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.03'/%3E%3C/svg%3E");
 }
 
 .app-shell {
@@ -56,8 +67,8 @@ body {
 .cal-modal-overlay {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
-  background-color: rgba(0,0,0,0.4);
-  backdrop-filter: blur(2px);
+  background-color: rgba(226, 230, 235, 0.8);
+  backdrop-filter: blur(4px);
   z-index: 9999;
   display: flex;
   justify-content: center;
@@ -67,16 +78,17 @@ body {
 }
 
 .cal-modal {
-  background-color: #ffffff;
-  border-radius: 20px;
+  background-color: var(--skeuo-surface);
+  border-radius: var(--skeuo-radius-lg);
   width: 100%;
-  max-width: 320px;
-  box-shadow: 0 20px 40px rgba(0,0,0,0.15);
-  padding: 20px;
+  max-width: 340px;
+  box-shadow: var(--skeuo-outer);
+  border: 2px solid var(--skeuo-highlight);
+  padding: 24px;
   animation: fadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
 
 .cal-header {
   display: flex;
@@ -93,7 +105,7 @@ body {
 }
 
 .cal-nav {
-  background: transparent;
+  background: var(--skeuo-surface);
   border: none;
   cursor: pointer;
   padding: 8px;
@@ -101,13 +113,18 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  color: #6b7280;
-  transition: background-color 0.2s;
+  color: #4b5563;
+  box-shadow: 2px 2px 5px var(--skeuo-shadow-light), -2px -2px 5px var(--skeuo-highlight);
+  transition: all 0.15s ease;
 }
 
 .cal-nav:hover {
-  background-color: #f3f4f6;
   color: #111827;
+}
+
+.cal-nav:active {
+  box-shadow: inset 2px 2px 5px var(--skeuo-shadow-dark), inset -2px -2px 5px var(--skeuo-highlight);
+  transform: translateY(1px);
 }
 
 .cal-body {

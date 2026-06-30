@@ -53,10 +53,9 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: var(--glass-bg);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  border-bottom: 1px solid var(--glass-border);
+  background-color: var(--skeuo-surface);
+  box-shadow: 0 4px 12px var(--skeuo-shadow-light);
+  border-bottom: 2px solid var(--skeuo-highlight);
 }
 
 .emp-top-header h2 {
@@ -69,16 +68,15 @@ body {
   gap: 8px;
 }
 
-/* Header Card (Dark Glass) */
+/* Header Card (Textured Metal Panel) */
 .emp-header-card {
-  background-color: var(--glass-dark-bg);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  border: 1px solid var(--glass-dark-border);
-  box-shadow: var(--glass-shadow);
+  background-color: #374151; /* Dark metallic */
+  background-image: linear-gradient(145deg, #4b5563, #1f2937);
+  border: 1px solid #6b7280;
+  box-shadow: 4px 4px 15px rgba(0,0,0,0.3), -4px -4px 15px rgba(255,255,255,0.05);
   border-radius: var(--emp-radius-xl);
   padding: 24px;
-  color: var(--emp-text-light);
+  color: #f3f4f6;
 }
 
 .emp-header-top {
@@ -98,19 +96,28 @@ body {
   align-items: center;
   gap: 6px;
   background-color: var(--emp-primary);
+  background-image: linear-gradient(to bottom, #10b981, #059669);
+  box-shadow: inset 0 2px 4px rgba(255,255,255,0.4), 0 2px 8px rgba(16,185,129,0.5);
   color: white;
   padding: 6px 12px;
   border-radius: 20px;
   font-size: 12px;
   font-weight: 600;
+  border: 1px solid #047857;
 }
 
 .emp-status-badge.offline {
-  background-color: var(--emp-text-muted);
+  background-color: #6b7280;
+  background-image: linear-gradient(to bottom, #9ca3af, #6b7280);
+  box-shadow: inset 0 2px 4px rgba(255,255,255,0.3), 0 2px 5px rgba(0,0,0,0.2);
+  border: 1px solid #4b5563;
 }
 
 .emp-status-badge.break {
   background-color: #f59e0b;
+  background-image: linear-gradient(to bottom, #fbbf24, #d97706);
+  box-shadow: inset 0 2px 4px rgba(255,255,255,0.4), 0 2px 8px rgba(245,158,11,0.5);
+  border: 1px solid #b45309;
 }
 
 .emp-profile-row {
@@ -142,18 +149,16 @@ body {
   color: #9ca3af;
 }
 
-/* Date Scroller (Light Glass) */
+/* Date Scroller (Raised Panel) */
 .emp-date-scroller {
-  background-color: var(--glass-bg);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  border: 1px solid var(--glass-border);
+  background-color: var(--skeuo-surface);
+  border: 1px solid var(--skeuo-highlight);
   border-radius: var(--emp-radius-lg);
   padding: 16px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  box-shadow: var(--glass-shadow);
+  box-shadow: var(--skeuo-outer);
 }
 
 .emp-date-text {
@@ -175,16 +180,15 @@ body {
 }
 
 .emp-timer-card {
-  background-color: var(--glass-dark-bg);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  border: 1px solid var(--glass-dark-border);
-  box-shadow: var(--glass-shadow);
+  background-color: #111827; /* LCD Dark */
   border-radius: var(--emp-radius-xl);
   padding: 16px;
-  color: white;
+  color: #10b981; /* Digital Green */
   display: flex;
   flex-direction: column;
+  box-shadow: inset 4px 4px 10px rgba(0,0,0,0.8), inset -2px -2px 5px rgba(255,255,255,0.2);
+  border: 3px solid #374151;
+  text-shadow: 0 0 8px rgba(16,185,129,0.4);
 }
 
 .emp-timer-label {
@@ -204,26 +208,24 @@ body {
 
 .emp-timer-target {
   font-size: 11px;
-  color: #9ca3af;
+  color: #6ee7b7;
   display: flex;
   align-items: center;
   gap: 4px;
 }
 
 .emp-info-card {
-  background-color: var(--glass-bg);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  border: 1px solid var(--glass-border);
+  background-color: var(--skeuo-surface);
+  border: 1px solid var(--skeuo-highlight);
   border-radius: var(--emp-radius-xl);
   padding: 16px;
-  box-shadow: var(--glass-shadow);
+  box-shadow: var(--skeuo-outer);
   display: flex;
   flex-direction: column;
 }
 
 .emp-badge-gray {
-  background-color: #f3f4f6;
+  background-color: #e5e7eb;
   color: var(--emp-text-muted);
   padding: 6px 12px;
   border-radius: 20px;
@@ -231,6 +233,8 @@ body {
   font-weight: 600;
   align-self: flex-start;
   margin-bottom: 16px;
+  box-shadow: inset 2px 2px 4px rgba(0,0,0,0.05), inset -2px -2px 4px white;
+  border: 1px solid #d1d5db;
 }
 
 .emp-time-block {
@@ -271,10 +275,8 @@ body {
 }
 
 .emp-btn-square {
-  background-color: var(--glass-bg);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  border: 1px solid var(--glass-border);
+  background-color: var(--skeuo-surface);
+  border: 2px solid var(--skeuo-highlight);
   border-radius: var(--emp-radius-lg);
   padding: 12px 4px;
   display: flex;
@@ -285,8 +287,14 @@ body {
   font-weight: 600;
   font-size: 12px;
   cursor: pointer;
-  box-shadow: var(--glass-shadow);
-  transition: border-color 0.2s;
+  box-shadow: var(--skeuo-outer);
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.emp-btn-square:active {
+  box-shadow: var(--skeuo-pressed);
+  transform: translateY(2px);
+  border-color: rgba(0,0,0,0.05);
 }
 
 @media (hover: hover) {
@@ -392,18 +400,16 @@ body {
   color: var(--emp-text-muted);
 }
 
-/* Bottom Nav */
+/* Bottom Nav (Tactile Dock) */
 .emp-bottom-nav {
   position: fixed;
   bottom: calc(24px + env(safe-area-inset-bottom));
   left: 24px;
   right: 24px;
-  background-color: rgba(255, 255, 255, 0.92);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  border: 1px solid var(--glass-border);
+  background-color: var(--skeuo-surface);
+  border: 2px solid var(--skeuo-highlight);
   border-radius: 32px;
-  box-shadow: var(--glass-shadow);
+  box-shadow: var(--skeuo-outer);
   display: flex;
   justify-content: space-between;
   padding: 8px 12px;
@@ -435,11 +441,10 @@ body {
 
 .emp-nav-item.active {
   color: var(--emp-primary);
-  background-color: rgba(255, 255, 255, 0.95);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  border: 1px solid var(--glass-border);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  background-color: var(--skeuo-bg);
+  box-shadow: var(--skeuo-pressed);
+  border: 1px solid rgba(0,0,0,0.05);
+  transform: translateY(1px);
 }
 
 /* Settings Page */
@@ -493,21 +498,31 @@ body {
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
-  border: none;
+  border: 1px solid var(--skeuo-highlight);
   display: flex;
   justify-content: center;
   align-items: center;
   gap: 8px;
-  transition: opacity 0.2s;
+  box-shadow: var(--skeuo-outer);
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.emp-btn-large:hover {
-  opacity: 0.9;
+.emp-btn-large:active {
+  box-shadow: var(--skeuo-pressed);
+  transform: translateY(2px);
+  border-color: rgba(0,0,0,0.05);
 }
 
 .emp-btn-large.primary {
   background-color: var(--emp-primary);
+  background-image: linear-gradient(to bottom, #10b981, #059669);
   color: white;
+  border: 1px solid #047857;
+  box-shadow: inset 0 2px 4px rgba(255,255,255,0.4), 0 4px 12px rgba(16,185,129,0.3);
+}
+
+.emp-btn-large.primary:active {
+  box-shadow: inset 0 4px 8px rgba(4,120,87,0.8);
 }
 
 .emp-btn-large.danger-outline {
@@ -528,15 +543,13 @@ body {
 }
 
 .login-card-white {
-  background-color: var(--glass-bg);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  border: 1px solid var(--glass-border);
+  background-color: var(--skeuo-surface);
+  border: 2px solid var(--skeuo-highlight);
   border-radius: 24px;
   padding: 32px;
   width: 100%;
   max-width: 400px;
-  box-shadow: var(--glass-shadow);
+  box-shadow: var(--skeuo-outer);
 }
 
 .login-icon-box {
