@@ -118,7 +118,7 @@ export default function AdminLayout() {
       {/* Sidebar Navigation */}
       <aside className="admin-sidebar">
         <div className="admin-sidebar-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <img src="/logo.svg" alt="Adnora Logo" style={{ height: '28px' }} />
+          <img src="/logo.svg" alt="Adnora Logo" style={{ height: '32px', transform: 'scale(3.5)', transformOrigin: 'left center' }} />
           <div style={{ display: 'flex', gap: '8px' }}>
             <button 
               onClick={() => navigate('/employee')}
