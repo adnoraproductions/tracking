@@ -17,7 +17,7 @@ export default function AdminLayout() {
           .admin-main { margin-top: 0 !important; padding-bottom: 100px !important; }
           .admin-page-header { flex-direction: column !important; align-items: flex-start !important; gap: 16px !important; }
           
-          /* Floating Pill Nav Bar - 100% Opaque */
+          /* Floating Pill Nav Bar - Skeuomorphic */
           .admin-nav {
             position: fixed !important;
             bottom: 24px !important;
@@ -27,9 +27,9 @@ export default function AdminLayout() {
             max-width: 480px !important;
             margin: 0 auto !important;
             padding: 8px 12px !important;
-            background-color: #ffffff !important;
-            border: 1px solid #e5e7eb !important;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.12) !important;
+            background-color: var(--skeuo-surface) !important;
+            border: 2px solid var(--skeuo-highlight) !important;
+            box-shadow: var(--skeuo-outer) !important;
             z-index: 100 !important;
             backdrop-filter: none !important;
             -webkit-backdrop-filter: none !important;
@@ -53,9 +53,10 @@ export default function AdminLayout() {
           }
           
           .admin-nav-item.active {
-            background-color: #f3f4f6 !important;
-            box-shadow: none !important;
-            border: 1px solid transparent !important;
+            background-color: var(--skeuo-bg) !important;
+            box-shadow: var(--skeuo-pressed) !important;
+            border: 1px solid rgba(0,0,0,0.05) !important;
+            transform: translateY(1px) !important;
           }
         }
       `}</style>
