@@ -54,9 +54,10 @@ body {
 }
 
 .admin-sidebar-header {
-  padding: 32px 24px;
-  border-bottom: 2px solid var(--skeuo-shadow-light);
-  box-shadow: 0 2px 4px rgba(255,255,255,0.5);
+  padding: 16px 20px;
+  border-bottom: 2px solid var(--skeuo-highlight);
+  box-shadow: 0 4px 12px var(--skeuo-shadow-light);
+  background-color: var(--skeuo-surface);
 }
 
 .admin-sidebar-header h2 {
