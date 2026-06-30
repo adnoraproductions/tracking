@@ -33,6 +33,23 @@ export default function AdminLayout() {
             z-index: 100 !important;
             backdrop-filter: none !important;
             -webkit-backdrop-filter: none !important;
+            
+            display: flex !important;
+            flex-direction: row !important;
+            justify-content: space-between !important;
+          }
+          
+          .admin-nav-item {
+            flex: 1 !important;
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            gap: 4px !important;
+            padding: 6px 2px !important;
+            font-size: 10px !important;
+            text-align: center !important;
+            min-width: 0 !important;
+            line-height: 1.2 !important;
           }
           
           .admin-nav-item.active {
