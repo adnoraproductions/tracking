@@ -1,5 +1,5 @@
 import React from 'react';
-import { Outlet, NavLink } from 'react-router-dom';
+import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { LayoutDashboard, Users, MapPin, LogOut, CalendarClock, UserCheck } from 'lucide-react';
 import PageTransition from '../../components/PageTransition';
@@ -7,16 +7,34 @@ import './Admin.css';
 
 export default function AdminLayout() {
   const { signOut } = useAuth();
+  const navigate = useNavigate();
 
   return (
     <div className="admin-layout">
       {/* Force override for mobile layout in case of CSS cache */}
       <style>{`
+        .admin-header-portal-btn {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          background-color: #e2e6eb;
+          border: 1px solid rgba(0,0,0,0.1);
+          padding: 6px 12px;
+          border-radius: 999px;
+          font-size: 12px;
+          font-weight: bold;
+          color: #4b5563;
+          box-shadow: inset 2px 2px 4px rgba(255,255,255,0.8), 2px 2px 5px rgba(0,0,0,0.1);
+          cursor: pointer;
+        }
+
         @media (max-width: 768px) {
           .admin-sidebar { position: relative !important; top: auto !important; height: auto !important; z-index: 100 !important; border-right: none !important; box-shadow: none !important; }
           .admin-main { margin-top: 60px !important; margin-left: 0 !important; padding: 20px !important; padding-bottom: 100px !important; }
           .admin-page-header { flex-direction: column !important; align-items: flex-start !important; gap: 16px !important; margin-bottom: 24px !important; }
           
+          .desktop-text { display: none !important; }
+
           /* Consistent Mobile Top Header */
           .admin-sidebar-header {
             position: fixed !important;
@@ -101,11 +119,21 @@ export default function AdminLayout() {
 
       {/* Sidebar Navigation */}
       <aside className="admin-sidebar">
-        <div className="admin-sidebar-header">
+        <div className="admin-sidebar-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <h2><span style={{color: 'var(--admin-primary)'}}>•</span> Adnora</h2>
-          <button onClick={signOut} className="admin-mobile-logout" title="Sign Out">
-            <LogOut size={20} />
-          </button>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button 
+              onClick={() => navigate('/employee')}
+              className="admin-header-portal-btn"
+              title="Employee Portal"
+            >
+              <UserCheck size={14} />
+              <span className="desktop-text">Employee Portal</span>
+            </button>
+            <button onClick={signOut} className="admin-mobile-logout" title="Sign Out">
+              <LogOut size={20} />
+            </button>
+          </div>
         </div>
         
         <nav className="admin-nav">
@@ -124,14 +152,6 @@ export default function AdminLayout() {
           >
             <CalendarClock size={20} />
             Attendance Logs
-          </NavLink>
-
-          <NavLink 
-            to="/employee" 
-            className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
-          >
-            <UserCheck size={20} />
-            My Attendance
           </NavLink>
 
           <NavLink 

@@ -23,7 +23,7 @@ function RootRedirect() {
   if (loading) return null;
   if (!user) return <Navigate to="/login" replace />;
   
-  if (role === USER_ROLES.ADMIN) return <Navigate to="/admin" replace />;
+  if (role === USER_ROLES.ADMIN) return <Navigate to="/employee" replace />;
   return <Navigate to="/employee" replace />;
 }
 
