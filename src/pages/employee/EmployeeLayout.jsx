@@ -12,7 +12,7 @@ export default function EmployeeLayout() {
     <div className="emp-layout">
       {/* Top Header */}
       <header className="emp-top-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h2 style={{ margin: 0 }}><span style={{color: 'var(--emp-primary)'}}>•</span> Adnora</h2>
+        <img src="/logo.svg" alt="Adnora Logo" style={{ height: '28px' }} />
         
         {role === 'admin' && (
           <button 
