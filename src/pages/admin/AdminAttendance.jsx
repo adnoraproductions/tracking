@@ -14,6 +14,9 @@ export default function AdminAttendance() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [expandedRowId, setExpandedRowId] = useState(null);
   const [showCalendar, setShowCalendar] = useState(false);
+  const [editLog, setEditLog] = useState(null);
+  const [editSessions, setEditSessions] = useState([]);
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
   
   // CSV Export Modal State
   const [showExportModal, setShowExportModal] = useState(false);
@@ -36,6 +39,7 @@ export default function AdminAttendance() {
         .from('attendance_days')
         .select(`
           id,
+          employee_id,
           date,
           status,
           total_work_minutes,
@@ -45,6 +49,7 @@ export default function AdminAttendance() {
             employee_code
           ),
           work_sessions (
+            id,
             started_at,
             ended_at
           ),
@@ -90,6 +95,77 @@ export default function AdminAttendance() {
     return nameMatch || codeMatch || dateMatch;
   });
 
+
+  const handleEditLogClick = (log, e) => {
+    e.stopPropagation();
+    setEditLog(log);
+    const sessions = (log.work_sessions || []).map(ws => ({
+      id: ws.id,
+      started_at: ws.started_at ? format(new Date(ws.started_at), "yyyy-MM-dd'T'HH:mm") : '',
+      ended_at: ws.ended_at ? format(new Date(ws.ended_at), "yyyy-MM-dd'T'HH:mm") : '',
+      original_started_at: ws.started_at,
+      original_ended_at: ws.ended_at
+    }));
+    setEditSessions(sessions);
+  };
+
+  const handleSessionChange = (id, field, value) => {
+    setEditSessions(prev => prev.map(s => s.id === id ? { ...s, [field]: value } : s));
+  };
+
+  const handleSaveEdit = async () => {
+    setIsSavingEdit(true);
+    try {
+      for (const session of editSessions) {
+        const oldSession = editLog.work_sessions.find(ws => ws.id === session.id);
+        if (!oldSession) continue;
+
+        let updates = {};
+        if (session.started_at && new Date(session.started_at).toISOString() !== new Date(oldSession.started_at).toISOString()) {
+          updates.started_at = new Date(session.started_at).toISOString();
+          
+          await supabase.from('attendance_events')
+            .update({ timestamp: updates.started_at })
+            .eq('attendance_day_id', editLog.id)
+            .eq('event_type', 'session_started')
+            .eq('timestamp', oldSession.started_at);
+        }
+
+        if (session.ended_at && oldSession.ended_at && new Date(session.ended_at).toISOString() !== new Date(oldSession.ended_at).toISOString()) {
+          updates.ended_at = new Date(session.ended_at).toISOString();
+          
+          await supabase.from('attendance_events')
+            .update({ timestamp: updates.ended_at })
+            .eq('attendance_day_id', editLog.id)
+            .eq('event_type', 'session_ended')
+            .eq('timestamp', oldSession.ended_at);
+        }
+
+        if (Object.keys(updates).length > 0) {
+          await supabase.from('work_sessions')
+            .update(updates)
+            .eq('id', session.id);
+        }
+      }
+
+      await supabase.rpc('rpc_update_day_totals', { p_attendance_day_id: editLog.id });
+      
+      await supabase.from('attendance_corrections').insert({
+        employee_id: editLog.employee_id,
+        attendance_day_id: editLog.id,
+        status: 'resolved',
+        reason: 'Admin Manual Edit'
+      });
+      
+      setEditLog(null);
+      await fetchLogs();
+    } catch (err) {
+      console.error(err);
+      alert('Failed to save edits: ' + err.message);
+    } finally {
+      setIsSavingEdit(false);
+    }
+  };
 
   const generateMonthlyExcel = async () => {
     try {
@@ -474,7 +550,16 @@ export default function AdminAttendance() {
                         <tr style={{ padding: 0, border: 'none', backgroundColor: 'transparent' }}>
                           <td colSpan="7" style={{ padding: '0', backgroundColor: 'transparent' }}>
                             <div style={{ padding: '24px', backgroundColor: '#f9fafb', borderRadius: 'var(--admin-radius-lg)', border: '1px solid var(--admin-border)' }}>
-                              <h4 style={{ margin: '0 0 16px 0', fontSize: '14px', color: 'var(--admin-text-dark)' }}>Detailed Timeline Log</h4>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '0 0 16px 0' }}>
+                                <h4 style={{ margin: 0, fontSize: '14px', color: 'var(--admin-text-dark)' }}>Detailed Timeline Log</h4>
+                                <button
+                                  onClick={(e) => handleEditLogClick(log, e)}
+                                  className="admin-btn secondary"
+                                  style={{ padding: '6px 12px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}
+                                >
+                                  <Edit2 size={14} /> Edit Times
+                                </button>
+                              </div>
                               <div style={{ display: 'flex', flexDirection: 'column' }}>
                               {log.attendance_events
                                   .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
@@ -642,6 +727,84 @@ export default function AdminAttendance() {
               >
                 {isExporting ? <Loader2 size={18} className="spinner" /> : <Download size={18} />}
                 {isExporting ? 'Generating...' : 'Download Excel'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {editLog && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1000,
+          display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '20px'
+        }}>
+          <div style={{
+            backgroundColor: 'var(--admin-card-bg)', borderRadius: '24px',
+            width: '100%', maxWidth: '500px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)',
+            maxHeight: '90vh', overflowY: 'auto'
+          }}>
+            <div style={{ padding: '24px', borderBottom: '1px solid var(--admin-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, backgroundColor: 'var(--admin-card-bg)', zIndex: 10 }}>
+              <h2 style={{ margin: 0, fontSize: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Edit2 size={20} color="var(--admin-primary)" />
+                Edit Attendance Times
+              </h2>
+              <button onClick={() => setEditLog(null)} style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}>
+                <X size={24} color="var(--admin-text-muted)" />
+              </button>
+            </div>
+            
+            <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              <div style={{ backgroundColor: '#f9fafb', padding: '12px 16px', borderRadius: '8px', border: '1px solid var(--admin-border)' }}>
+                <strong style={{ display: 'block', marginBottom: '4px', color: 'var(--admin-text-dark)' }}>{editLog.profiles?.full_name}</strong>
+                <span style={{ fontSize: '13px', color: 'var(--admin-text-muted)' }}>Date: {editLog.date}</span>
+              </div>
+              
+              {editSessions.map((session, idx) => (
+                <div key={session.id} style={{ display: 'flex', flexDirection: 'column', gap: '12px', paddingBottom: '20px', borderBottom: idx < editSessions.length - 1 ? '1px dashed var(--admin-border)' : 'none' }}>
+                  <h5 style={{ margin: 0, fontSize: '14px', color: 'var(--admin-text-dark)' }}>Work Session {idx + 1}</h5>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                    <label style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '14px', fontWeight: '500' }}>
+                      Punch In Time
+                      <input 
+                        type="datetime-local" 
+                        value={session.started_at} 
+                        onChange={(e) => handleSessionChange(session.id, 'started_at', e.target.value)}
+                        style={{ width: '100%', boxSizing: 'border-box', padding: '10px', borderRadius: '8px', border: '1px solid var(--admin-border)', outline: 'none' }}
+                      />
+                    </label>
+                    <label style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '14px', fontWeight: '500' }}>
+                      Punch Out Time
+                      <input 
+                        type="datetime-local" 
+                        value={session.ended_at} 
+                        onChange={(e) => handleSessionChange(session.id, 'ended_at', e.target.value)}
+                        style={{ width: '100%', boxSizing: 'border-box', padding: '10px', borderRadius: '8px', border: '1px solid var(--admin-border)', outline: 'none' }}
+                      />
+                    </label>
+                  </div>
+                </div>
+              ))}
+              {editSessions.length === 0 && (
+                <p style={{ color: 'var(--admin-text-muted)', fontSize: '14px', textAlign: 'center' }}>No work sessions recorded yet.</p>
+              )}
+            </div>
+
+            <div style={{ padding: '16px 24px', borderTop: '1px solid var(--admin-border)', display: 'flex', justifyContent: 'flex-end', gap: '12px', position: 'sticky', bottom: 0, backgroundColor: 'var(--admin-card-bg)', zIndex: 10 }}>
+              <button 
+                className="admin-btn secondary" 
+                onClick={() => setEditLog(null)}
+                disabled={isSavingEdit}
+              >
+                Cancel
+              </button>
+              <button 
+                className="admin-btn primary" 
+                onClick={handleSaveEdit}
+                disabled={isSavingEdit || editSessions.length === 0}
+              >
+                {isSavingEdit ? <Loader2 size={18} className="spinner" /> : <Edit2 size={18} />}
+                {isSavingEdit ? 'Saving...' : 'Save Changes'}
               </button>
             </div>
           </div>
