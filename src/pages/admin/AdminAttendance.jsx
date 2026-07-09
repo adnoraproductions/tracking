@@ -550,12 +550,12 @@ export default function AdminAttendance() {
                         <tr style={{ padding: 0, border: 'none', backgroundColor: 'transparent' }}>
                           <td colSpan="7" style={{ padding: '0', backgroundColor: 'transparent' }}>
                             <div style={{ padding: '24px', backgroundColor: '#f9fafb', borderRadius: 'var(--admin-radius-lg)', border: '1px solid var(--admin-border)' }}>
-                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '0 0 16px 0' }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '0 0 16px 0', flexWrap: 'wrap', gap: '12px' }}>
                                 <h4 style={{ margin: 0, fontSize: '14px', color: 'var(--admin-text-dark)' }}>Detailed Timeline Log</h4>
                                 <button
                                   onClick={(e) => handleEditLogClick(log, e)}
                                   className="admin-btn secondary"
-                                  style={{ padding: '6px 12px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}
+                                  style={{ padding: '6px 12px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap' }}
                                 >
                                   <Edit2 size={14} /> Edit Times
                                 </button>
