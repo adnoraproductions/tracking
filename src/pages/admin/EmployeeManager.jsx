@@ -48,23 +48,42 @@ export default function EmployeeManager() {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('*')
-        .order('employee_code', { ascending: true, nullsFirst: false })
-        .order('full_name', { ascending: true });
+        .select('*');
       
       if (error) throw error;
-      setEmployees(data);
 
       const { data: sessionData, error: sessionErr } = await supabase
         .from('work_sessions')
         .select('employee_id, status, started_at')
         .in('status', ['working', 'on_break']);
 
+      let sessionMap = {};
       if (!sessionErr && sessionData) {
-        const sessionMap = {};
         sessionData.forEach(s => { sessionMap[s.employee_id] = s; });
         setActiveSessions(sessionMap);
       }
+
+      // Sort employees: admin first, then active vs inactive, then working vs not working, then alphabetical
+      data.sort((a, b) => {
+        if (a.role === 'admin' && b.role !== 'admin') return -1;
+        if (a.role !== 'admin' && b.role === 'admin') return 1;
+
+        const aStatus = a.status || 'active';
+        const bStatus = b.status || 'active';
+        if (aStatus === 'active' && bStatus !== 'active') return -1;
+        if (aStatus !== 'active' && bStatus === 'active') return 1;
+
+        const aWorking = !!sessionMap[a.id];
+        const bWorking = !!sessionMap[b.id];
+        if (aWorking && !bWorking) return -1;
+        if (!aWorking && bWorking) return 1;
+
+        const aName = a.full_name || '';
+        const bName = b.full_name || '';
+        return aName.localeCompare(bName);
+      });
+
+      setEmployees(data);
     } catch (err) {
       console.error(err);
       setError('Failed to load employees');
