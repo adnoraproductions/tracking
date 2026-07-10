@@ -142,7 +142,7 @@ export default function AdminDashboard() {
       )}
 
       {/* Skeuomorphic Metrics Row */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '32px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '32px' }}>
         
         {/* Working - Dark LCD Style */}
         <div className="admin-timer-card">
