@@ -146,7 +146,7 @@ export default function AdminDashboard() {
         
         {/* Working - Dark LCD Style */}
         <div className="admin-timer-card">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
             <div style={{ backgroundColor: 'rgba(16,185,129,0.1)', width: '40px', height: '40px', borderRadius: '12px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
               <Clock size={20} />
             </div>
@@ -162,7 +162,7 @@ export default function AdminDashboard() {
 
         {/* On Break - Light Skeuomorphic Style */}
         <div className="admin-info-card" style={{ justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
             <div style={{ backgroundColor: '#fef3c7', color: '#d97706', width: '40px', height: '40px', borderRadius: '12px', display: 'flex', justifyContent: 'center', alignItems: 'center', border: '1px solid #fde68a' }}>
               <AlertCircle size={20} />
             </div>
