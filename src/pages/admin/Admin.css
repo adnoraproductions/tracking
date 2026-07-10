@@ -78,6 +78,7 @@ body {
   border: 3px solid #374151;
   text-shadow: 0 0 8px rgba(16,185,129,0.4);
   aspect-ratio: 1 / 1;
+  max-height: 220px;
 }
 
 .admin-info-card {
@@ -89,6 +90,7 @@ body {
   display: flex;
   flex-direction: column;
   aspect-ratio: 1 / 1;
+  max-height: 220px;
 }
 
 /* Sidebar */
