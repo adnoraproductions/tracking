@@ -47,6 +47,11 @@ body {
   padding: 24px;
   color: #f3f4f6;
   margin-bottom: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 20px;
 }
 
 .admin-header-card h1 {
