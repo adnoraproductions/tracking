@@ -77,7 +77,6 @@ body {
   box-shadow: inset 4px 4px 10px rgba(0,0,0,0.8), inset -2px -2px 5px rgba(255,255,255,0.2);
   border: 3px solid #374151;
   text-shadow: 0 0 8px rgba(16,185,129,0.4);
-  aspect-ratio: 1 / 1;
 }
 
 .admin-info-card {
@@ -88,7 +87,6 @@ body {
   box-shadow: var(--skeuo-outer);
   display: flex;
   flex-direction: column;
-  aspect-ratio: 1 / 1;
 }
 
 /* Sidebar */
