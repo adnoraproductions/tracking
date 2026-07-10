@@ -77,7 +77,7 @@ export default function OfficeSettings() {
   };
 
   if (loading) {
-    return <div style={{display: 'flex', justifyContent: 'center', padding: '40px'}}><Loader2 className="spinner" size={32} /></div>;
+    return <div style={{display: 'flex', justifyContent: 'center', padding: '40px'}}><div className="skeuo-loader"></div></div>;
   }
 
   return (
@@ -171,7 +171,7 @@ export default function OfficeSettings() {
           </div>
 
           <button type="submit" disabled={saving} className="admin-btn primary">
-            {saving ? <Loader2 className="spinner" size={16} /> : <Save size={16} />}
+            {saving ? <div className="skeuo-loader sm"></div> : <Save size={16} />}
             Save Settings
           </button>
         </form>

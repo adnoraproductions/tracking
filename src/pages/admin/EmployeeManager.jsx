@@ -346,7 +346,7 @@ export default function EmployeeManager() {
   };
 
   if (loading) {
-    return <div style={{display: 'flex', justifyContent: 'center', padding: '40px'}}><Loader2 className="spinner" size={32} /></div>;
+    return <div style={{display: 'flex', justifyContent: 'center', padding: '40px'}}><div className="skeuo-loader"></div></div>;
   }
 
   return (
@@ -620,7 +620,7 @@ export default function EmployeeManager() {
               <div style={{ marginTop: '16px', display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
                 <button type="button" className="admin-btn secondary" onClick={() => setShowAddModal(false)}>Cancel</button>
                 <button type="submit" className="admin-btn primary" disabled={addLoading}>
-                  {addLoading ? <Loader2 className="spinner" size={16} /> : 'Create Employee'}
+                  {addLoading ? <div className="skeuo-loader sm"></div> : 'Create Employee'}
                 </button>
               </div>
 
@@ -762,7 +762,7 @@ export default function EmployeeManager() {
               <div style={{ marginTop: '8px', display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
                 <button type="button" className="admin-btn secondary" onClick={() => setSettingsEmployee(null)}>Close</button>
                 <button type="submit" className="admin-btn primary" disabled={settingsLoading}>
-                  {settingsLoading ? <Loader2 className="spinner" size={16} /> : 'Save Settings'}
+                  {settingsLoading ? <div className="skeuo-loader sm"></div> : 'Save Settings'}
                 </button>
               </div>
 

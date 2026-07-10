@@ -166,6 +166,21 @@ export default function EmployeeDashboard() {
 
   useEffect(() => {
     if (profile) fetchData();
+
+    // Register global hooks for Flutter Android Widget
+    window.triggerWidgetPunch = (type) => {
+      if (type === 'break_toggle') {
+        const currentStatus = sessionState.activeSession?.status;
+        if (currentStatus === 'working') handleAction('break_out');
+        else if (currentStatus === 'on_break') handleAction('break_in');
+      } else {
+        handleAction(type);
+      }
+    };
+
+    return () => {
+      delete window.triggerWidgetPunch;
+    };
   }, [profile, selectedDate]);
 
   const handleForgotCheckoutSubmit = async (e) => {
@@ -417,8 +432,21 @@ export default function EmployeeDashboard() {
     targetMessage = `${rH}h ${rM}m remaining to hit target`;
   }
 
+  // Sync state to native Android Widget
+  useEffect(() => {
+    if (window.flutter_inappwebview) {
+      window.flutter_inappwebview.callHandler('updateWidgetState', {
+        status: sessionState.activeSession ? sessionState.activeSession.status : 'offline',
+        workedSeconds: Math.floor(totalWorkedSeconds),
+        targetMessage: targetMessage,
+        firstIn: firstIn,
+        lastOut: lastOut
+      });
+    }
+  }, [sessionState.activeSession, totalWorkedSeconds, targetMessage, firstIn, lastOut]);
+
   if (initialLoad) {
-    return <div style={{display: 'flex', justifyContent: 'center', padding: '40px'}}><Loader2 className="spinner" size={32} /></div>;
+    return <div style={{display: 'flex', justifyContent: 'center', padding: '40px'}}><div className="skeuo-loader"></div></div>;
   }
 
   const getGreeting = () => {
@@ -461,7 +489,7 @@ export default function EmployeeDashboard() {
           style={{ cursor: 'pointer', position: 'relative', display: 'flex', alignItems: 'center', gap: '8px' }}
           title="Choose a date"
         >
-          {loading && !initialLoad && <Loader2 className="spinner" size={14} style={{ color: 'var(--emp-primary)' }} />}
+          {loading && !initialLoad && <div className="skeuo-loader sm"></div>}
           {isToday ? 'Today · ' : ''}{format(selectedDate, 'EEE, dd MMM')}
         </span>
 
@@ -533,19 +561,19 @@ export default function EmployeeDashboard() {
                   <>
                     <button className="emp-btn-square" onClick={() => handleAction('start_office')} disabled={actionLoading}>
                       <div style={{ backgroundColor: '#d1fae5', padding: '8px', borderRadius: '50%', color: 'var(--emp-primary)' }}>
-                        {actionLoading === 'start_office' ? <Loader2 className="spinner" size={20} /> : <Briefcase size={20} />}
+                        {actionLoading === 'start_office' ? <div className="skeuo-loader sm"></div> : <Briefcase size={20} />}
                       </div>
                       Office
                     </button>
                     <button className="emp-btn-square" onClick={() => handleAction('start_wfh')} disabled={actionLoading}>
                       <div style={{ backgroundColor: '#e0e7ff', padding: '8px', borderRadius: '50%', color: '#4f46e5' }}>
-                        {actionLoading === 'start_wfh' ? <Loader2 className="spinner" size={20} /> : <Home size={20} />}
+                        {actionLoading === 'start_wfh' ? <div className="skeuo-loader sm"></div> : <Home size={20} />}
                       </div>
                       WFH
                     </button>
                     <button className="emp-btn-square" onClick={() => handleAction('start_field_work')} disabled={actionLoading}>
                       <div style={{ backgroundColor: '#fef3c7', padding: '8px', borderRadius: '50%', color: '#d97706' }}>
-                        {actionLoading === 'start_field_work' ? <Loader2 className="spinner" size={20} /> : <MapPin size={20} />}
+                        {actionLoading === 'start_field_work' ? <div className="skeuo-loader sm"></div> : <MapPin size={20} />}
                       </div>
                       Field
                     </button>
@@ -554,13 +582,13 @@ export default function EmployeeDashboard() {
                   <>
                     <button className="emp-btn-square danger" onClick={() => handleAction('end')} disabled={actionLoading}>
                        <div style={{ backgroundColor: '#fef2f2', padding: '8px', borderRadius: '50%', color: 'var(--emp-danger)' }}>
-                         {actionLoading === 'end' ? <Loader2 className="spinner" size={20} /> : <Clock size={20} />}
+                         {actionLoading === 'end' ? <div className="skeuo-loader sm"></div> : <Clock size={20} />}
                        </div>
                        Check Out
                     </button>
                     <button className={`emp-btn-square ${sessionState.activeSession.status === 'on_break' ? 'active' : ''}`} onClick={() => handleAction(sessionState.activeSession.status === 'on_break' ? 'break_in' : 'break_out')} disabled={actionLoading}>
                        <div style={{ backgroundColor: sessionState.activeSession.status === 'on_break' ? 'rgba(255,255,255,0.2)' : '#fef3c7', padding: '8px', borderRadius: '50%', color: sessionState.activeSession.status === 'on_break' ? 'white' : '#f59e0b' }}>
-                         {(actionLoading === 'break_in' || actionLoading === 'break_out') ? <Loader2 className="spinner" size={20} /> : <Clock size={20} />}
+                         {(actionLoading === 'break_in' || actionLoading === 'break_out') ? <div className="skeuo-loader sm"></div> : <Clock size={20} />}
                        </div>
                        {sessionState.activeSession.status === 'on_break' ? 'Resume Work' : 'Take Break'}
                     </button>
@@ -616,7 +644,7 @@ export default function EmployeeDashboard() {
                 onClick={handleForgotCheckoutSubmit}
                 disabled={forgotLoading || !forgotReason}
               >
-                {forgotLoading ? <Loader2 className="spinner" size={18} /> : 'Submit & Check Out'}
+                {forgotLoading ? <div className="skeuo-loader sm"></div> : 'Submit & Check Out'}
               </button>
             </div>
           </div>
@@ -656,7 +684,7 @@ export default function EmployeeDashboard() {
                 onClick={handleForgotCheckInSubmit}
                 disabled={forgotCheckInLoading || !forgotCheckInReason}
               >
-                {forgotCheckInLoading ? <Loader2 className="spinner" size={18} /> : 'Submit & Check In'}
+                {forgotCheckInLoading ? <div className="skeuo-loader sm"></div> : 'Submit & Check In'}
               </button>
             </div>
           </div>

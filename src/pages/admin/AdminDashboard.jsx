@@ -8,6 +8,9 @@ export default function AdminDashboard() {
   const [pendingRequests, setPendingRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selectedCorrection, setSelectedCorrection] = useState(null);
+  const [newExitTime, setNewExitTime] = useState('');
+  const [resolving, setResolving] = useState(false);
 
   useEffect(() => {
     fetchLiveData();
@@ -45,6 +48,7 @@ export default function AdminDashboard() {
           id,
           reason,
           created_at,
+          work_session_id,
           profiles (
             full_name,
             employee_code
@@ -82,8 +86,30 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleFixExitTime = async () => {
+    if (!newExitTime) return;
+    setResolving(true);
+    try {
+      const exitTimestamp = new Date(newExitTime).toISOString();
+      const { error } = await supabase.rpc('rpc_admin_fix_exit_time', {
+        p_correction_id: selectedCorrection.id,
+        p_work_session_id: selectedCorrection.work_session_id,
+        p_new_exit_time: exitTimestamp
+      });
+      if (error) throw error;
+      setSelectedCorrection(null);
+      setNewExitTime('');
+      fetchLiveData();
+    } catch (err) {
+      console.error(err);
+      alert('Failed to fix exit time: ' + err.message);
+    } finally {
+      setResolving(false);
+    }
+  };
+
   if (loading) {
-    return <div style={{display: 'flex', justifyContent: 'center', padding: '40px'}}><Loader2 className="spinner" size={32} /></div>;
+    return <div style={{display: 'flex', justifyContent: 'center', padding: '40px'}}><div className="skeuo-loader"></div></div>;
   }
 
   const workingCount = activeSessions.filter(s => s.status === 'working').length;
@@ -201,13 +227,18 @@ export default function AdminDashboard() {
       </div>
 
       {/* Pending Requests Table */}
-      {pendingRequests.length > 0 && (
-        <div className="admin-card">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '24px' }}>
-            <AlertCircle color="#ea580c" />
-            <h2 style={{ margin: 0 }}>Pending Check-In/Out Overrides</h2>
+      <div className="admin-card">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '24px' }}>
+          <AlertCircle color="#ea580c" />
+          <h2 style={{ margin: 0 }}>Action Required: Missing Check-Outs & Overrides</h2>
+        </div>
+        
+        {pendingRequests.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '40px', color: 'var(--admin-text-muted)' }}>
+            <AlertCircle size={48} color="#cbd5e1" style={{ marginBottom: '16px', opacity: 0.5 }} />
+            <p style={{ margin: 0 }}>No pending actions required.</p>
           </div>
-          
+        ) : (
           <div className="admin-table-container">
             <table className="admin-table">
               <thead>
@@ -232,18 +263,68 @@ export default function AdminDashboard() {
                       {format(new Date(req.created_at), 'MMM dd, yyyy hh:mm a')}
                     </td>
                     <td data-label="Actions" style={{ textAlign: 'right' }}>
-                      <button 
-                        onClick={() => handleResolveRequest(req.id)}
-                        className="admin-btn primary"
-                        style={{ padding: '6px 12px', fontSize: '12px', backgroundColor: '#10b981' }}
-                      >
-                        Mark Resolved
-                      </button>
+                      {req.work_session_id ? (
+                        <button 
+                          onClick={() => setSelectedCorrection(req)}
+                          className="admin-btn primary"
+                          style={{ padding: '6px 12px', fontSize: '12px', backgroundColor: '#3b82f6' }}
+                        >
+                          Review & Fix Exit Time
+                        </button>
+                      ) : (
+                        <button 
+                          onClick={() => handleResolveRequest(req.id)}
+                          className="admin-btn primary"
+                          style={{ padding: '6px 12px', fontSize: '12px', backgroundColor: '#10b981' }}
+                        >
+                          Mark Resolved
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
+          </div>
+        )}
+      </div>
+
+      {/* Set Exit Time Modal */}
+      {selectedCorrection && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1000,
+          display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '20px'
+        }}>
+          <div style={{
+            backgroundColor: '#fff', borderRadius: '24px', width: '100%', maxWidth: '400px', padding: '24px'
+          }}>
+            <h3 style={{ marginTop: 0, color: 'var(--admin-text-dark)' }}>Set True Exit Time</h3>
+            <p style={{ color: 'var(--admin-text-muted)', fontSize: '14px', marginBottom: '20px' }}>
+              Please enter the exact date and time {selectedCorrection.profiles?.full_name} left work. This will automatically update their session and recalculate total hours.
+            </p>
+            <input
+              type="datetime-local"
+              style={{ width: '100%', padding: '12px', border: '1px solid var(--admin-border)', borderRadius: '12px', marginBottom: '24px', fontFamily: 'inherit' }}
+              value={newExitTime}
+              onChange={(e) => setNewExitTime(e.target.value)}
+            />
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button 
+                style={{ flex: 1, padding: '12px', borderRadius: '12px', border: '1px solid var(--admin-border)', backgroundColor: '#fff', fontWeight: 'bold' }}
+                onClick={() => { setSelectedCorrection(null); setNewExitTime(''); }}
+                disabled={resolving}
+              >
+                Cancel
+              </button>
+              <button 
+                style={{ flex: 1, padding: '12px', borderRadius: '12px', border: 'none', backgroundColor: '#3b82f6', color: 'white', fontWeight: 'bold', display: 'flex', justifyContent: 'center' }}
+                onClick={handleFixExitTime}
+                disabled={resolving || !newExitTime}
+              >
+                {resolving ? <div className="skeuo-loader sm"></div> : 'Save & Resolve'}
+              </button>
+            </div>
           </div>
         </div>
       )}

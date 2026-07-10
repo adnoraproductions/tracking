@@ -358,7 +358,7 @@ export default function AdminAttendance() {
   };
 
   if (loading) {
-    return <div style={{display: 'flex', justifyContent: 'center', padding: '40px'}}><Loader2 className="spinner" size={32} /></div>;
+    return <div style={{display: 'flex', justifyContent: 'center', padding: '40px'}}><div className="skeuo-loader"></div></div>;
   }
 
   return (
@@ -725,7 +725,7 @@ export default function AdminAttendance() {
                 onClick={generateMonthlyExcel}
                 disabled={isExporting}
               >
-                {isExporting ? <Loader2 size={18} className="spinner" /> : <Download size={18} />}
+                {isExporting ? <div className="skeuo-loader sm"></div> : <Download size={18} />}
                 {isExporting ? 'Generating...' : 'Download Excel'}
               </button>
             </div>
@@ -803,7 +803,7 @@ export default function AdminAttendance() {
                 onClick={handleSaveEdit}
                 disabled={isSavingEdit || editSessions.length === 0}
               >
-                {isSavingEdit ? <Loader2 size={18} className="spinner" /> : <Edit2 size={18} />}
+                {isSavingEdit ? <div className="skeuo-loader sm"></div> : <Edit2 size={18} />}
                 {isSavingEdit ? 'Saving...' : 'Save Changes'}
               </button>
             </div>

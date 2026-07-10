@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="horizontal"
+    android:background="#00000000"
+    android:weightSum="2"
+    android:baselineAligned="false">
+
+    <!-- Left Dark Card -->
+    <LinearLayout
+        android:id="@+id/card_left"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:background="@drawable/skeuo_dark_card"
+        android:padding="20dp"
+        android:layout_marginEnd="8dp">
+
+        <ImageView
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:src="@android:drawable/ic_menu_recent_history"
+            android:background="@drawable/widget_icon_bg"
+            android:padding="6dp"
+            android:layout_marginBottom="24dp"
+            android:tint="#10b981" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="TOTAL WORKED"
+            android:textColor="#94a3b8"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.05"
+            android:layout_marginBottom="4dp" />
+
+        <Chronometer
+            android:id="@+id/widget_chronometer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#10b981"
+            android:textSize="36sp"
+            android:textStyle="bold"
+            android:shadowColor="#8010b981"
+            android:shadowRadius="15"
+            android:shadowDx="0"
+            android:shadowDy="0"
+            android:format="%s"
+            android:layout_marginBottom="12dp" />
+
+        <TextView
+            android:id="@+id/widget_remaining"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="2h 0m remaining to hit target"
+            android:textColor="#10b981"
+            android:textSize="12sp" />
+
+    </LinearLayout>
+
+    <!-- Right Light Card -->
+    <LinearLayout
+        android:id="@+id/card_right"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:background="@drawable/skeuo_light_card"
+        android:padding="20dp"
+        android:layout_marginStart="8dp">
+
+        <TextView
+            android:id="@+id/widget_status_pill"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Working"
+            android:textColor="#475569"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:background="@drawable/skeuo_pill"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:paddingTop="6dp"
+            android:paddingBottom="6dp"
+            android:layout_marginBottom="24dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="FIRST IN"
+            android:textColor="#94a3b8"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.05"
+            android:layout_marginBottom="4dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="24dp">
+            
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="●"
+                android:textColor="#10b981"
+                android:textSize="14sp"
+                android:layout_marginEnd="8dp" />
+                
+            <TextView
+                android:id="@+id/widget_first_in"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="11:02:58 AM"
+                android:textColor="#0f172a"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="LAST OUT"
+            android:textColor="#94a3b8"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.05"
+            android:layout_marginBottom="4dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+            
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="×"
+                android:textColor="#ef4444"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:layout_marginEnd="8dp" />
+                
+            <TextView
+                android:id="@+id/widget_last_out"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="-"
+                android:textColor="#0f172a"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+    </LinearLayout>
+
+</LinearLayout>

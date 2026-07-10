@@ -165,7 +165,7 @@ export default function EmployeeAttendance() {
       )}
 
       {loading ? (
-        <div style={{display: 'flex', justifyContent: 'center', padding: '40px'}}><Loader2 className="spinner" size={32} color="var(--emp-primary)" /></div>
+        <div style={{display: 'flex', justifyContent: 'center', padding: '40px'}}><div className="skeuo-loader"></div></div>
       ) : (
         <div className="emp-log-card" style={{ padding: '20px' }}>
           {renderLog()}

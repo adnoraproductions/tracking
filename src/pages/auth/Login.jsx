@@ -89,7 +89,7 @@ export default function Login() {
             disabled={loading}
             className="emp-btn-large primary"
           >
-            {loading ? <Loader2 className="spinner" size={20} /> : 'Continue'}
+            {loading ? <div className="skeuo-loader sm"></div> : 'Continue'}
           </button>
         </form>
 
