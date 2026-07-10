@@ -37,6 +37,53 @@ body {
   margin-bottom: 32px;
 }
 
+/* Skeuomorphic Header Cards (Copied from Employee) */
+.admin-header-card {
+  background-color: #374151; /* Dark metallic */
+  background-image: linear-gradient(145deg, #4b5563, #1f2937);
+  border: 1px solid #6b7280;
+  box-shadow: 4px 4px 15px rgba(0,0,0,0.3), -4px -4px 15px rgba(255,255,255,0.05);
+  border-radius: var(--admin-radius-xl);
+  padding: 24px;
+  color: #f3f4f6;
+  margin-bottom: 24px;
+}
+
+.admin-header-card h1 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+  color: white;
+}
+
+.admin-header-card p {
+  margin: 4px 0 0 0;
+  font-size: 14px;
+  color: #9ca3af;
+}
+
+.admin-timer-card {
+  background-color: #111827; /* LCD Dark */
+  border-radius: var(--admin-radius-xl);
+  padding: 24px;
+  color: #10b981; /* Digital Green */
+  display: flex;
+  flex-direction: column;
+  box-shadow: inset 4px 4px 10px rgba(0,0,0,0.8), inset -2px -2px 5px rgba(255,255,255,0.2);
+  border: 3px solid #374151;
+  text-shadow: 0 0 8px rgba(16,185,129,0.4);
+}
+
+.admin-info-card {
+  background-color: var(--skeuo-surface);
+  border: 1px solid var(--skeuo-highlight);
+  border-radius: var(--admin-radius-xl);
+  padding: 24px;
+  box-shadow: var(--skeuo-outer);
+  display: flex;
+  flex-direction: column;
+}
+
 /* Sidebar */
 .admin-sidebar {
   width: 280px;

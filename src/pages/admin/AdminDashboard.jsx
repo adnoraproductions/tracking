@@ -117,9 +117,22 @@ export default function AdminDashboard() {
 
   return (
     <div>
-      <div className="admin-page-header">
-        <h1>Live Workforce Monitor</h1>
-        <p>Real-time overview of employees currently working or on break.</p>
+      {/* Skeuomorphic Header Card */}
+      <div className="admin-header-card">
+        <div>
+          <h1>Live Workforce Monitor</h1>
+          <p>Real-time overview of employees currently working or on break.</p>
+        </div>
+        
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', backgroundColor: 'rgba(255,255,255,0.1)', padding: '12px 24px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.1)' }}>
+          <div style={{ color: '#10b981' }}>
+            <Users size={28} />
+          </div>
+          <div>
+            <div style={{ fontSize: '12px', color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: '600' }}>Total Active</div>
+            <div style={{ fontSize: '32px', fontWeight: '700', color: 'white', lineHeight: '1', marginTop: '4px' }}>{activeSessions.length}</div>
+          </div>
+        </div>
       </div>
 
       {error && (
@@ -128,37 +141,41 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {/* Metrics Row */}
-      <div className="admin-metrics-grid">
-        <div className="admin-card" style={{ marginBottom: 0, display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <div style={{ backgroundColor: 'var(--admin-primary-light)', color: 'var(--admin-primary)', padding: '16px', borderRadius: '16px' }}>
-            <Users size={24} />
+      {/* Skeuomorphic Metrics Row */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '32px' }}>
+        
+        {/* Working - Dark LCD Style */}
+        <div className="admin-timer-card">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div style={{ backgroundColor: 'rgba(16,185,129,0.1)', width: '40px', height: '40px', borderRadius: '12px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+              <Clock size={20} />
+            </div>
+            <div style={{ padding: '6px 12px', backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: '20px', fontSize: '12px', color: 'white', fontWeight: '600', border: '1px solid rgba(255,255,255,0.2)' }}>
+              Active Now
+            </div>
           </div>
-          <div>
-            <h3 style={{ margin: 0, fontSize: '14px', color: 'var(--admin-text-muted)' }}>Total Active</h3>
-            <span style={{ fontSize: '28px', fontWeight: '700', color: 'var(--admin-text-dark)' }}>{activeSessions.length}</span>
-          </div>
-        </div>
-
-        <div className="admin-card" style={{ marginBottom: 0, display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <div style={{ backgroundColor: '#dcfce7', color: '#16a34a', padding: '16px', borderRadius: '16px' }}>
-            <Clock size={24} />
-          </div>
-          <div>
-            <h3 style={{ margin: 0, fontSize: '14px', color: 'var(--admin-text-muted)' }}>Working</h3>
-            <span style={{ fontSize: '28px', fontWeight: '700', color: 'var(--admin-text-dark)' }}>{workingCount}</span>
+          <div style={{ marginTop: 'auto', paddingTop: '24px' }}>
+            <div style={{ fontSize: '12px', color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px', fontWeight: '600' }}>Working</div>
+            <div style={{ fontSize: '48px', fontWeight: '700', lineHeight: '1' }}>{workingCount}</div>
           </div>
         </div>
 
-        <div className="admin-card" style={{ marginBottom: 0, display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <div style={{ backgroundColor: '#fef3c7', color: '#d97706', padding: '16px', borderRadius: '16px' }}>
-            <AlertCircle size={24} />
+        {/* On Break - Light Skeuomorphic Style */}
+        <div className="admin-info-card" style={{ justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div style={{ backgroundColor: '#fef3c7', color: '#d97706', width: '40px', height: '40px', borderRadius: '12px', display: 'flex', justifyContent: 'center', alignItems: 'center', border: '1px solid #fde68a' }}>
+              <AlertCircle size={20} />
+            </div>
+            <div style={{ padding: '6px 12px', backgroundColor: '#f3f4f6', borderRadius: '20px', fontSize: '12px', color: '#6b7280', fontWeight: '600', border: '1px solid #e5e7eb' }}>
+              Paused
+            </div>
           </div>
-          <div>
-            <h3 style={{ margin: 0, fontSize: '14px', color: 'var(--admin-text-muted)' }}>On Break</h3>
-            <span style={{ fontSize: '28px', fontWeight: '700', color: 'var(--admin-text-dark)' }}>{breakCount}</span>
+          <div style={{ marginTop: 'auto', paddingTop: '24px' }}>
+            <div style={{ fontSize: '12px', color: 'var(--admin-text-muted)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px', fontWeight: '600' }}>On Break</div>
+            <div style={{ fontSize: '48px', fontWeight: '700', lineHeight: '1', color: 'var(--admin-text-dark)' }}>{breakCount}</div>
           </div>
         </div>
+
       </div>
 
       <div className="admin-card">
@@ -201,7 +218,7 @@ export default function AdminDashboard() {
                       </td>
                       <td data-label="Location Type" style={{ textTransform: 'capitalize' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          {session.session_type.replace('_', ' ')}
+                          {session.session_type === 'wfh' ? 'WFH' : session.session_type.replace('_', ' ')}
                           {session.session_type !== 'office' && session.start_latitude && session.start_longitude && (
                             <a 
                               href={`https://www.google.com/maps?q=${session.start_latitude},${session.start_longitude}`} 
