@@ -146,12 +146,9 @@ export default function AdminDashboard() {
         
         {/* Working - Dark LCD Style */}
         <div className="admin-timer-card">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+          <div style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center', width: '100%' }}>
             <div style={{ backgroundColor: 'rgba(16,185,129,0.1)', width: '40px', height: '40px', borderRadius: '12px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
               <Clock size={20} />
-            </div>
-            <div style={{ padding: '6px 12px', backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: '20px', fontSize: '12px', color: 'white', fontWeight: '600', border: '1px solid rgba(255,255,255,0.2)', whiteSpace: 'nowrap' }}>
-              Active Now
             </div>
           </div>
           <div style={{ marginTop: 'auto', paddingTop: '24px' }}>
@@ -162,10 +159,7 @@ export default function AdminDashboard() {
 
         {/* On Break - Light Skeuomorphic Style */}
         <div className="admin-info-card" style={{ justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
-            <div style={{ backgroundColor: '#fef3c7', color: '#d97706', width: '40px', height: '40px', borderRadius: '12px', display: 'flex', justifyContent: 'center', alignItems: 'center', border: '1px solid #fde68a' }}>
-              <AlertCircle size={20} />
-            </div>
+          <div style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center', width: '100%' }}>
             <div style={{ padding: '6px 12px', backgroundColor: '#f3f4f6', borderRadius: '20px', fontSize: '12px', color: '#6b7280', fontWeight: '600', border: '1px solid #e5e7eb', whiteSpace: 'nowrap' }}>
               Paused
             </div>
