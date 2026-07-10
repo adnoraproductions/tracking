@@ -70,7 +70,7 @@ body {
 .admin-timer-card {
   background-color: #111827; /* LCD Dark */
   border-radius: var(--admin-radius-xl);
-  padding: 24px;
+  padding: 16px;
   color: #10b981; /* Digital Green */
   display: flex;
   flex-direction: column;
@@ -83,10 +83,16 @@ body {
   background-color: var(--skeuo-surface);
   border: 1px solid var(--skeuo-highlight);
   border-radius: var(--admin-radius-xl);
-  padding: 24px;
+  padding: 16px;
   box-shadow: var(--skeuo-outer);
   display: flex;
   flex-direction: column;
+}
+
+@media (max-width: 768px) {
+  .admin-timer-card, .admin-info-card {
+    aspect-ratio: 1 / 1;
+  }
 }
 
 /* Sidebar */
