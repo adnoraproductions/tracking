@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase/client';
 import { createClient } from '@supabase/supabase-js';
 import { Loader2, Edit2, X, Plus, UserPlus, Trash2, Power, Settings, Smartphone, LogOut, LogIn } from 'lucide-react';
+import { format } from 'date-fns';
 
 // Create a secondary client specifically for signing up users so it doesn't overwrite the admin's session
 const adminAuthClient = createClient(
@@ -126,7 +127,7 @@ export default function EmployeeManager() {
     if (!window.confirm(`Are you sure you want to FORCE CHECK IN ${emp.full_name}? This will instantly start an Office shift for them.`)) return;
     
     try {
-      const { data, error } = await supabase.rpc('admin_force_start_session', { p_employee_id: emp.id, p_session_type: 'office' });
+      const { data, error } = await supabase.rpc('admin_force_start_session', { p_employee_id: emp.id, p_session_type: 'office', p_local_date: format(new Date(), 'yyyy-MM-dd') });
       if (error) throw error;
       
       // Log the admin action so it appears in the timeline

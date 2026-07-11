@@ -7,7 +7,8 @@
 CREATE OR REPLACE FUNCTION public.rpc_start_session(
   p_session_type public.session_type,
   p_lat DOUBLE PRECISION,
-  p_lng DOUBLE PRECISION
+  p_lng DOUBLE PRECISION,
+  p_local_date DATE DEFAULT CURRENT_DATE
 ) RETURNS jsonb
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -24,7 +25,7 @@ BEGIN
     RAISE EXCEPTION 'Not authenticated';
   END IF;
 
-  v_current_date := CURRENT_DATE;
+  v_current_date := p_local_date;
 
   -- 1. Get or create today's attendance_day
   SELECT id INTO v_attendance_day_id
@@ -193,10 +194,10 @@ BEGIN
     RAISE EXCEPTION 'Not authenticated';
   END IF;
 
-  -- 1. Find today's active attendance day
-  SELECT id INTO v_attendance_day_id
-  FROM public.attendance_days
-  WHERE employee_id = v_employee_id AND date = CURRENT_DATE
+  -- 1. Find the active attendance day directly from the active work session
+  SELECT attendance_day_id INTO v_attendance_day_id
+  FROM public.work_sessions
+  WHERE employee_id = v_employee_id AND status IN ('working', 'on_break')
   LIMIT 1;
 
   IF v_attendance_day_id IS NULL THEN
@@ -303,7 +304,7 @@ END;
 $$;
 
 -- 7. ADMIN FORCE START SESSION
-CREATE OR REPLACE FUNCTION public.admin_force_start_session(p_employee_id UUID, p_session_type public.session_type)
+CREATE OR REPLACE FUNCTION public.admin_force_start_session(p_employee_id UUID, p_session_type public.session_type, p_local_date DATE DEFAULT CURRENT_DATE)
 RETURNS jsonb
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -321,7 +322,7 @@ BEGIN
     RAISE EXCEPTION 'Unauthorized';
   END IF;
 
-  v_current_date := CURRENT_DATE;
+  v_current_date := p_local_date;
 
   -- 1. Get or create today's attendance_day
   SELECT id INTO v_attendance_day_id

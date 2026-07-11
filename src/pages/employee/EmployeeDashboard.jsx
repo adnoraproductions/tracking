@@ -264,7 +264,7 @@ export default function EmployeeDashboard() {
 
   // Handle actions
   const handleAction = async (actionType) => {
-    setActionLoading(true);
+    setActionLoading(actionType);
     setError(null);
     try {
       let geo = { lat: 0, lng: 0 };
@@ -292,8 +292,13 @@ export default function EmployeeDashboard() {
                return; // Stop standard flow
             }
          } else {
-            const { location } = await getLocationAndValidate(rpcSessionType); 
-            geo = { lat: location.latitude, lng: location.longitude };
+            try {
+               const { location } = await getLocationAndValidate(rpcSessionType); 
+               geo = { lat: location.latitude, lng: location.longitude };
+            } catch (geoErr) {
+               console.warn("Location fetch failed, proceeding anyway for WFH/Field:", geoErr);
+               geo = { lat: null, lng: null };
+            }
          }
       } else if (actionType === 'end' && sessionState.activeSession?.session_type === 'office') {
          // Require location and validation for end of office session
@@ -337,7 +342,7 @@ export default function EmployeeDashboard() {
       const isOfficeSession = rpcSessionType === 'office' || sessionState.activeSession?.session_type === 'office';
 
       const args = actionType.startsWith('start_') 
-        ? { p_session_type: rpcSessionType, p_lat: isOfficeSession ? null : geo.lat, p_lng: isOfficeSession ? null : geo.lng }
+        ? { p_session_type: rpcSessionType, p_lat: isOfficeSession ? null : geo.lat, p_lng: isOfficeSession ? null : geo.lng, p_local_date: format(new Date(), 'yyyy-MM-dd') }
         : { p_lat: isOfficeSession ? null : geo.lat, p_lng: isOfficeSession ? null : geo.lng };
 
       const { data, error } = await supabase.rpc(rpcName, args);
