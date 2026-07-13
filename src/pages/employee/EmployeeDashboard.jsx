@@ -3,7 +3,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase/client';
 import { useGeolocation } from '../../hooks/useGeolocation';
 import { Loader2, ChevronLeft, ChevronRight, Clock, RefreshCw, MapPin, Home, Briefcase, Calendar } from 'lucide-react';
-import { format, differenceInSeconds } from 'date-fns';
+import { format, differenceInSeconds, isToday } from 'date-fns';
 import CalendarModal from '../../components/CalendarModal';
 
 export default function EmployeeDashboard() {
@@ -122,7 +122,8 @@ export default function EmployeeDashboard() {
         if (sessErr) throw sessErr;
         sessions = sessData || [];
         activeSession = sessions.find(s => s.status === 'working' || s.status === 'on_break') || null;
-      } else {
+      } else if (isToday(selectedDate)) {
+        // Only look for a dangling active session (e.g. checked in yesterday but still working) if we are viewing "Today"
         const { data: sessData, error: sessErr } = await supabase
           .from('work_sessions')
           .select('*, session_breaks(*)')
