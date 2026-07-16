@@ -51,7 +51,14 @@ export default function AdminAttendance() {
           work_sessions (
             id,
             started_at,
-            ended_at
+            ended_at,
+            status,
+            session_type,
+            session_breaks (
+              id,
+              started_at,
+              ended_at
+            )
           ),
           attendance_events (
             id,
@@ -104,13 +111,28 @@ export default function AdminAttendance() {
       started_at: ws.started_at ? format(new Date(ws.started_at), "yyyy-MM-dd'T'HH:mm") : '',
       ended_at: ws.ended_at ? format(new Date(ws.ended_at), "yyyy-MM-dd'T'HH:mm") : '',
       original_started_at: ws.started_at,
-      original_ended_at: ws.ended_at
+      original_ended_at: ws.ended_at,
+      breaks: (ws.session_breaks || []).map(b => ({
+        id: b.id,
+        started_at: b.started_at ? format(new Date(b.started_at), "yyyy-MM-dd'T'HH:mm") : '',
+        ended_at: b.ended_at ? format(new Date(b.ended_at), "yyyy-MM-dd'T'HH:mm") : '',
+        original_started_at: b.started_at,
+        original_ended_at: b.ended_at
+      }))
     }));
     setEditSessions(sessions);
   };
 
   const handleSessionChange = (id, field, value) => {
     setEditSessions(prev => prev.map(s => s.id === id ? { ...s, [field]: value } : s));
+  };
+
+  const handleBreakChange = (sessionId, breakId, field, value) => {
+    setEditSessions(prev => prev.map(s => 
+      s.id === sessionId 
+        ? { ...s, breaks: s.breaks.map(b => b.id === breakId ? { ...b, [field]: value } : b) }
+        : s
+    ));
   };
 
   const handleSaveEdit = async () => {
@@ -121,30 +143,86 @@ export default function AdminAttendance() {
         if (!oldSession) continue;
 
         let updates = {};
-        if (session.started_at && new Date(session.started_at).toISOString() !== new Date(oldSession.started_at).toISOString()) {
+        if (session.started_at && new Date(session.started_at).toISOString() !== (oldSession.started_at ? new Date(oldSession.started_at).toISOString() : '')) {
           updates.started_at = new Date(session.started_at).toISOString();
           
-          await supabase.from('attendance_events')
-            .update({ timestamp: updates.started_at })
-            .eq('attendance_day_id', editLog.id)
-            .eq('event_type', 'session_started')
-            .eq('timestamp', oldSession.started_at);
+          if (oldSession.started_at) {
+            await supabase.from('attendance_events')
+              .update({ timestamp: updates.started_at })
+              .eq('attendance_day_id', editLog.id)
+              .eq('event_type', 'session_started')
+              .eq('timestamp', oldSession.started_at);
+          }
         }
 
-        if (session.ended_at && oldSession.ended_at && new Date(session.ended_at).toISOString() !== new Date(oldSession.ended_at).toISOString()) {
+        if (session.ended_at && new Date(session.ended_at).toISOString() !== (oldSession.ended_at ? new Date(oldSession.ended_at).toISOString() : '')) {
           updates.ended_at = new Date(session.ended_at).toISOString();
           
-          await supabase.from('attendance_events')
-            .update({ timestamp: updates.ended_at })
-            .eq('attendance_day_id', editLog.id)
-            .eq('event_type', 'session_ended')
-            .eq('timestamp', oldSession.ended_at);
+          if (!oldSession.ended_at) {
+            updates.status = 'ended';
+            await supabase.from('attendance_events').insert({
+              employee_id: editLog.employee_id,
+              attendance_day_id: editLog.id,
+              event_type: 'session_ended',
+              session_type: oldSession.session_type,
+              timestamp: updates.ended_at
+            });
+          } else {
+            await supabase.from('attendance_events')
+              .update({ timestamp: updates.ended_at })
+              .eq('attendance_day_id', editLog.id)
+              .eq('event_type', 'session_ended')
+              .eq('timestamp', oldSession.ended_at);
+          }
         }
 
         if (Object.keys(updates).length > 0) {
           await supabase.from('work_sessions')
             .update(updates)
             .eq('id', session.id);
+        }
+
+        // Process Breaks
+        for (const brk of session.breaks) {
+          const oldBreak = oldSession.session_breaks.find(b => b.id === brk.id);
+          if (!oldBreak) continue;
+
+          let bUpdates = {};
+          if (brk.started_at && new Date(brk.started_at).toISOString() !== (oldBreak.started_at ? new Date(oldBreak.started_at).toISOString() : '')) {
+            bUpdates.started_at = new Date(brk.started_at).toISOString();
+            if (oldBreak.started_at) {
+              await supabase.from('attendance_events')
+                .update({ timestamp: bUpdates.started_at })
+                .eq('attendance_day_id', editLog.id)
+                .eq('event_type', 'break_out')
+                .eq('timestamp', oldBreak.started_at);
+            }
+          }
+
+          if (brk.ended_at && new Date(brk.ended_at).toISOString() !== (oldBreak.ended_at ? new Date(oldBreak.ended_at).toISOString() : '')) {
+            bUpdates.ended_at = new Date(brk.ended_at).toISOString();
+            
+            if (!oldBreak.ended_at) {
+              await supabase.from('work_sessions').update({ status: 'working' }).eq('id', session.id);
+              await supabase.from('attendance_events').insert({
+                employee_id: editLog.employee_id,
+                attendance_day_id: editLog.id,
+                event_type: 'break_in',
+                session_type: oldSession.session_type,
+                timestamp: bUpdates.ended_at
+              });
+            } else {
+              await supabase.from('attendance_events')
+                .update({ timestamp: bUpdates.ended_at })
+                .eq('attendance_day_id', editLog.id)
+                .eq('event_type', 'break_in')
+                .eq('timestamp', oldBreak.ended_at);
+            }
+          }
+
+          if (Object.keys(bUpdates).length > 0) {
+            await supabase.from('session_breaks').update(bUpdates).eq('id', brk.id);
+          }
         }
       }
 
@@ -783,6 +861,36 @@ export default function AdminAttendance() {
                       />
                     </label>
                   </div>
+                  
+                  {session.breaks && session.breaks.length > 0 && (
+                    <div style={{ marginTop: '16px', padding: '16px', backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px' }}>
+                      <h6 style={{ margin: '0 0 12px 0', fontSize: '13px', color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Associated Breaks</h6>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                        {session.breaks.map((brk, bIdx) => (
+                          <div key={brk.id} style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', paddingBottom: bIdx < session.breaks.length - 1 ? '16px' : '0', borderBottom: bIdx < session.breaks.length - 1 ? '1px dashed #e5e7eb' : 'none' }}>
+                            <label style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '12px', fontWeight: '500', flex: '1 1 150px' }}>
+                              Punch Out (Start Break)
+                              <input 
+                                type="datetime-local" 
+                                value={brk.started_at} 
+                                onChange={(e) => handleBreakChange(session.id, brk.id, 'started_at', e.target.value)}
+                                style={{ width: '100%', boxSizing: 'border-box', padding: '8px', borderRadius: '6px', border: '1px solid var(--admin-border)', outline: 'none', fontSize: '13px' }}
+                              />
+                            </label>
+                            <label style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '12px', fontWeight: '500', flex: '1 1 150px' }}>
+                              Punch In (End Break)
+                              <input 
+                                type="datetime-local" 
+                                value={brk.ended_at} 
+                                onChange={(e) => handleBreakChange(session.id, brk.id, 'ended_at', e.target.value)}
+                                style={{ width: '100%', boxSizing: 'border-box', padding: '8px', borderRadius: '6px', border: '1px solid var(--admin-border)', outline: 'none', fontSize: '13px' }}
+                              />
+                            </label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
               {editSessions.length === 0 && (
