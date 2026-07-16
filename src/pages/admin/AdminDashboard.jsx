@@ -31,7 +31,10 @@ export default function AdminDashboard() {
           start_latitude,
           start_longitude,
           attendance_days (
-            total_work_minutes
+            total_work_minutes,
+            work_sessions (
+              started_at
+            )
           ),
           session_breaks (
             started_at,
@@ -257,7 +260,15 @@ export default function AdminDashboard() {
                           )}
                         </div>
                       </td>
-                      <td data-label="Checked In At">{format(new Date(session.started_at), 'hh:mm a')}</td>
+                      <td data-label="Checked In At">
+                        {(() => {
+                          const allSessions = session.attendance_days?.work_sessions || [];
+                          const firstSession = allSessions.length > 0 
+                            ? allSessions.sort((a, b) => new Date(a.started_at) - new Date(b.started_at))[0]
+                            : session;
+                          return format(new Date(firstSession.started_at), 'hh:mm a');
+                        })()}
+                      </td>
                       <td data-label="Duration" style={{ fontWeight: '600' }}>{durationStr}</td>
                     </tr>
                   );
