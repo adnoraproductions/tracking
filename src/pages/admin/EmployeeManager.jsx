@@ -40,6 +40,8 @@ export default function EmployeeManager() {
   });
 
   const [activeSessions, setActiveSessions] = useState({});
+  const [checkInEmp, setCheckInEmp] = useState(null);
+  const [checkOutEmp, setCheckOutEmp] = useState(null);
 
   useEffect(() => {
     fetchEmployees();
@@ -55,7 +57,7 @@ export default function EmployeeManager() {
 
       const { data: sessionData, error: sessionErr } = await supabase
         .from('work_sessions')
-        .select('employee_id, status, started_at')
+        .select('id, employee_id, status, started_at, attendance_day_id, session_type')
         .in('status', ['working', 'on_break']);
 
       let sessionMap = {};
@@ -93,29 +95,19 @@ export default function EmployeeManager() {
     }
   };
 
-  const handleForceEndSession = async (emp) => {
-    if (!window.confirm(`Are you sure you want to FORCE CHECKOUT ${emp.full_name}? This will instantly end their active shift.`)) return;
-    
+  const executeEndSession = async (emp) => {
     try {
       const { data, error } = await supabase.rpc('admin_force_end_session', { p_employee_id: emp.id });
       if (error) throw error;
-      
-      // Log the admin action so it appears in the timeline
       if (data && data.work_session_id) {
         const { data: wsData } = await supabase.from('work_sessions').select('attendance_day_id').eq('id', data.work_session_id).single();
         if (wsData) {
-          const { error: insErr } = await supabase.from('attendance_corrections').insert({
-            employee_id: emp.id,
-            attendance_day_id: wsData.attendance_day_id,
-            work_session_id: data.work_session_id,
-            status: 'resolved',
-            reason: 'Admin Force Check Out'
+          await supabase.from('attendance_corrections').insert({
+            employee_id: emp.id, attendance_day_id: wsData.attendance_day_id, work_session_id: data.work_session_id, status: 'resolved', reason: 'Admin Force Check Out'
           });
-          if (insErr) console.error("Insert Admin Force Check Out Failed:", insErr);
         }
       }
-      
-      alert(`Successfully ended active session for ${emp.full_name}`);
+      setCheckOutEmp(null);
       await fetchEmployees();
     } catch (err) {
       console.error(err);
@@ -123,33 +115,49 @@ export default function EmployeeManager() {
     }
   };
 
-  const handleForceStartSession = async (emp) => {
-    if (!window.confirm(`Are you sure you want to FORCE CHECK IN ${emp.full_name}? This will instantly start an Office shift for them.`)) return;
-    
+  const executeToggleBreak = async (emp) => {
     try {
-      const { data, error } = await supabase.rpc('admin_force_start_session', { p_employee_id: emp.id, p_session_type: 'office', p_local_date: format(new Date(), 'yyyy-MM-dd') });
-      if (error) throw error;
+      const ws = activeSessions[emp.id];
+      if (!ws) return;
       
-      // Log the admin action so it appears in the timeline
-      if (data && data.work_session_id) {
-        const { data: wsData } = await supabase.from('work_sessions').select('attendance_day_id').eq('id', data.work_session_id).single();
-        if (wsData) {
-          const { error: insErr } = await supabase.from('attendance_corrections').insert({
-            employee_id: emp.id,
-            attendance_day_id: wsData.attendance_day_id,
-            work_session_id: data.work_session_id,
-            status: 'resolved',
-            reason: 'Admin Force Check In'
-          });
-          if (insErr) console.error("Insert Admin Force Check In Failed:", insErr);
+      if (ws.status === 'working') {
+        await supabase.from('session_breaks').insert({ work_session_id: ws.id, started_at: new Date().toISOString() });
+        await supabase.from('work_sessions').update({ status: 'on_break' }).eq('id', ws.id);
+        await supabase.from('attendance_events').insert({ employee_id: emp.id, attendance_day_id: ws.attendance_day_id, event_type: 'break_out', session_type: ws.session_type, timestamp: new Date().toISOString() });
+      } else if (ws.status === 'on_break') {
+        const { data: openBreak } = await supabase.from('session_breaks').select('id').eq('work_session_id', ws.id).is('ended_at', null).single();
+        if (openBreak) {
+          await supabase.from('session_breaks').update({ ended_at: new Date().toISOString() }).eq('id', openBreak.id);
         }
+        await supabase.from('work_sessions').update({ status: 'working' }).eq('id', ws.id);
+        await supabase.from('attendance_events').insert({ employee_id: emp.id, attendance_day_id: ws.attendance_day_id, event_type: 'break_in', session_type: ws.session_type, timestamp: new Date().toISOString() });
+        await supabase.rpc('rpc_update_day_totals', { p_attendance_day_id: ws.attendance_day_id });
       }
-      
-      alert(`Successfully started office session for ${emp.full_name}`);
+      setCheckOutEmp(null);
       await fetchEmployees();
     } catch (err) {
       console.error(err);
-      alert('Failed to force start session: ' + err.message);
+      alert('Failed to toggle break: ' + err.message);
+    }
+  };
+
+  const executeStartSession = async (emp, type) => {
+    try {
+      const { data, error } = await supabase.rpc('admin_force_start_session', { p_employee_id: emp.id, p_session_type: type, p_local_date: format(new Date(), 'yyyy-MM-dd') });
+      if (error) throw error;
+      if (data && data.work_session_id) {
+        const { data: wsData } = await supabase.from('work_sessions').select('attendance_day_id').eq('id', data.work_session_id).single();
+        if (wsData) {
+          await supabase.from('attendance_corrections').insert({
+            employee_id: emp.id, attendance_day_id: wsData.attendance_day_id, work_session_id: data.work_session_id, status: 'resolved', reason: 'Admin Force Check In'
+          });
+        }
+      }
+      setCheckInEmp(null);
+      await fetchEmployees();
+    } catch (err) {
+      console.error(err);
+      alert('Failed to force check in: ' + err.message);
     }
   };
 
@@ -480,9 +488,9 @@ export default function EmployeeManager() {
                       <td data-label="Designation">{emp.designation || '-'}</td>
                       <td data-label="Status">
                         {activeSessions[emp.id] ? (
-                          <span className="admin-badge green" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                            <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#10b981', display: 'inline-block' }}></span>
-                            WORKING
+                          <span className={`admin-badge ${activeSessions[emp.id].status === 'on_break' ? 'orange' : 'green'}`} style={{ width: '90px', display: 'flex', justifyContent: 'center' }}>
+                            <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'white', marginRight: '6px' }}></span>
+                            {activeSessions[emp.id].status === 'on_break' ? 'ON BREAK' : 'WORKING'}
                           </span>
                         ) : (
                           <span className={`admin-badge ${emp.status === 'inactive' ? 'gray' : 'green'}`}>
@@ -501,9 +509,9 @@ export default function EmployeeManager() {
                           {activeSessions[emp.id] ? (
                             <button 
                               type="button"
-                              onClick={() => handleForceEndSession(emp)}
+                              onClick={() => setCheckOutEmp(emp)}
                               className="admin-btn secondary"
-                              title="Force Check Out"
+                              title="Session Actions"
                               style={{ padding: '6px', border: 'none', color: '#dc2626', pointerEvents: 'auto', backgroundColor: '#fee2e2' }}
                             >
                               <LogOut size={16} style={{ pointerEvents: 'none' }} />
@@ -511,7 +519,7 @@ export default function EmployeeManager() {
                           ) : (
                             <button 
                               type="button"
-                              onClick={() => handleForceStartSession(emp)}
+                              onClick={() => setCheckInEmp(emp)}
                               className="admin-btn secondary"
                               title="Force Check In"
                               style={{ padding: '6px', border: 'none', color: '#16a34a', pointerEvents: 'auto', backgroundColor: '#dcfce7' }}
@@ -768,6 +776,55 @@ export default function EmployeeManager() {
               </div>
 
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Check In Modal */}
+      {checkInEmp && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1000,
+          display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '20px'
+        }}>
+          <div style={{
+            backgroundColor: 'var(--admin-card-bg)', borderRadius: '24px',
+            width: '100%', maxWidth: '400px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)', padding: '24px'
+          }}>
+            <h2 style={{ margin: '0 0 16px 0', fontSize: '20px' }}>Start Session for {checkInEmp.full_name}</h2>
+            <p style={{ margin: '0 0 24px 0', color: 'var(--admin-text-muted)' }}>Select the location type for this shift.</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <button className="admin-btn primary" style={{ width: '100%', justifyContent: 'center' }} onClick={() => executeStartSession(checkInEmp, 'office')}>Office</button>
+              <button className="admin-btn primary" style={{ width: '100%', justifyContent: 'center', backgroundColor: '#3b82f6' }} onClick={() => executeStartSession(checkInEmp, 'wfh')}>Work From Home</button>
+              <button className="admin-btn primary" style={{ width: '100%', justifyContent: 'center', backgroundColor: '#8b5cf6' }} onClick={() => executeStartSession(checkInEmp, 'field')}>Field Work</button>
+              <button className="admin-btn secondary" style={{ width: '100%', justifyContent: 'center', marginTop: '12px' }} onClick={() => setCheckInEmp(null)}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Check Out / Action Modal */}
+      {checkOutEmp && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1000,
+          display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '20px'
+        }}>
+          <div style={{
+            backgroundColor: 'var(--admin-card-bg)', borderRadius: '24px',
+            width: '100%', maxWidth: '400px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)', padding: '24px'
+          }}>
+            <h2 style={{ margin: '0 0 16px 0', fontSize: '20px' }}>Session Actions: {checkOutEmp.full_name}</h2>
+            <p style={{ margin: '0 0 24px 0', color: 'var(--admin-text-muted)' }}>Choose an action for their current shift.</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {activeSessions[checkOutEmp.id]?.status === 'working' ? (
+                <button className="admin-btn primary" style={{ width: '100%', justifyContent: 'center', backgroundColor: '#ea580c' }} onClick={() => executeToggleBreak(checkOutEmp)}>Take Break</button>
+              ) : (
+                <button className="admin-btn primary" style={{ width: '100%', justifyContent: 'center', backgroundColor: '#16a34a' }} onClick={() => executeToggleBreak(checkOutEmp)}>End Break (Resume Work)</button>
+              )}
+              <button className="admin-btn primary" style={{ width: '100%', justifyContent: 'center', backgroundColor: '#dc2626' }} onClick={() => executeEndSession(checkOutEmp)}>Check Out (End Shift)</button>
+              <button className="admin-btn secondary" style={{ width: '100%', justifyContent: 'center', marginTop: '12px' }} onClick={() => setCheckOutEmp(null)}>Cancel</button>
+            </div>
           </div>
         </div>
       )}
