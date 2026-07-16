@@ -32,6 +32,7 @@ export default function AdminDashboard() {
           start_longitude,
           attendance_days (
             total_work_minutes,
+            total_break_minutes,
             work_sessions (
               started_at
             )
@@ -204,6 +205,7 @@ export default function AdminDashboard() {
                   <th>Status</th>
                   <th>Location Type</th>
                   <th>Checked In At</th>
+                  <th>Total Break</th>
                   <th>Duration</th>
                 </tr>
               </thead>
@@ -228,6 +230,12 @@ export default function AdminDashboard() {
                   
                   // Total net worked time today
                   const totalMins = pastWorkMins + (currentGrossMins - currentBreakMins);
+                  
+                  const pastBreakMins = session.attendance_days?.total_break_minutes || 0;
+                  const totalBreaks = pastBreakMins + currentBreakMins;
+                  const bHours = Math.floor(totalBreaks / 60);
+                  const bMins = Math.floor(totalBreaks % 60);
+                  const totalBreakStr = bHours > 0 ? `${bHours}h ${bMins}m` : `${bMins}m`;
                   
                   const hours = Math.floor(totalMins / 60);
                   const remMins = Math.floor(totalMins % 60);
@@ -269,6 +277,7 @@ export default function AdminDashboard() {
                           return format(new Date(firstSession.started_at), 'hh:mm a');
                         })()}
                       </td>
+                      <td data-label="Total Break">{totalBreakStr}</td>
                       <td data-label="Duration" style={{ fontWeight: '600' }}>{durationStr}</td>
                     </tr>
                   );
