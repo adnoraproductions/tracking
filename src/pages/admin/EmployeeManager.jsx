@@ -488,8 +488,8 @@ export default function EmployeeManager() {
                       <td data-label="Designation">{emp.designation || '-'}</td>
                       <td data-label="Status">
                         {activeSessions[emp.id] ? (
-                          <span className={`admin-badge ${activeSessions[emp.id].status === 'on_break' ? 'orange' : 'green'}`} style={{ width: '90px', display: 'flex', justifyContent: 'center' }}>
-                            <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'white', marginRight: '6px' }}></span>
+                          <span className={`admin-badge ${activeSessions[emp.id].status === 'on_break' ? 'orange' : 'green'}`} style={{ minWidth: '90px', display: 'flex', justifyContent: 'center', alignItems: 'center', whiteSpace: 'nowrap' }}>
+                            <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'white', marginRight: '6px', flexShrink: 0 }}></span>
                             {activeSessions[emp.id].status === 'on_break' ? 'ON BREAK' : 'WORKING'}
                           </span>
                         ) : (
