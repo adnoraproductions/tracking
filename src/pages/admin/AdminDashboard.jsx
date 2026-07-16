@@ -30,6 +30,13 @@ export default function AdminDashboard() {
           session_type,
           start_latitude,
           start_longitude,
+          attendance_days (
+            total_work_minutes
+          ),
+          session_breaks (
+            started_at,
+            ended_at
+          ),
           profiles (
             id,
             full_name,
@@ -200,9 +207,27 @@ export default function AdminDashboard() {
               <tbody>
                 {activeSessions.map(session => {
                   const emp = session.profiles;
-                  const mins = differenceInMinutes(new Date(), new Date(session.started_at));
-                  const hours = Math.floor(mins / 60);
-                  const remMins = mins % 60;
+                  
+                  // Past completed sessions total
+                  const pastWorkMins = session.attendance_days?.total_work_minutes || 0;
+                  
+                  // Gross time of current session segment
+                  const currentGrossMins = differenceInMinutes(new Date(), new Date(session.started_at));
+                  
+                  // Subtract all breaks in current session (both closed and ongoing)
+                  let currentBreakMins = 0;
+                  if (session.session_breaks && session.session_breaks.length > 0) {
+                    session.session_breaks.forEach(b => {
+                      const end = b.ended_at ? new Date(b.ended_at) : new Date();
+                      currentBreakMins += differenceInMinutes(end, new Date(b.started_at));
+                    });
+                  }
+                  
+                  // Total net worked time today
+                  const totalMins = pastWorkMins + (currentGrossMins - currentBreakMins);
+                  
+                  const hours = Math.floor(totalMins / 60);
+                  const remMins = Math.floor(totalMins % 60);
                   const durationStr = hours > 0 ? `${hours}h ${remMins}m` : `${remMins}m`;
 
                   return (

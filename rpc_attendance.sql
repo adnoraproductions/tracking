@@ -4,6 +4,8 @@
 -- ==============================================================================
 
 -- 1. START SESSION
+DROP FUNCTION IF EXISTS public.rpc_start_session(public.session_type, DOUBLE PRECISION, DOUBLE PRECISION);
+
 CREATE OR REPLACE FUNCTION public.rpc_start_session(
   p_session_type public.session_type,
   p_lat DOUBLE PRECISION,
@@ -304,6 +306,8 @@ END;
 $$;
 
 -- 7. ADMIN FORCE START SESSION
+DROP FUNCTION IF EXISTS public.admin_force_start_session(UUID, public.session_type);
+
 CREATE OR REPLACE FUNCTION public.admin_force_start_session(p_employee_id UUID, p_session_type public.session_type, p_local_date DATE DEFAULT CURRENT_DATE)
 RETURNS jsonb
 LANGUAGE plpgsql
