@@ -41,6 +41,7 @@ export default function EmployeeManager() {
 
   const [activeSessions, setActiveSessions] = useState({});
   const [checkInEmp, setCheckInEmp] = useState(null);
+  const [checkInForm, setCheckInForm] = useState({ type: 'office', timeMode: 'current', timestamp: '', lat: '', lng: '' });
   const [checkOutEmp, setCheckOutEmp] = useState(null);
 
   useEffect(() => {
@@ -141,9 +142,24 @@ export default function EmployeeManager() {
     }
   };
 
-  const executeStartSession = async (emp, type) => {
+  const executeStartSession = async (e) => {
+    e.preventDefault();
     try {
-      const { data, error } = await supabase.rpc('admin_force_start_session', { p_employee_id: emp.id, p_session_type: type, p_local_date: format(new Date(), 'yyyy-MM-dd') });
+      const emp = checkInEmp;
+      if (!emp) return;
+
+      const p_timestamp = checkInForm.timeMode === 'custom' && checkInForm.timestamp ? new Date(checkInForm.timestamp).toISOString() : new Date().toISOString();
+      const p_lat = checkInForm.type === 'field_work' && checkInForm.lat ? parseFloat(checkInForm.lat) : null;
+      const p_lng = checkInForm.type === 'field_work' && checkInForm.lng ? parseFloat(checkInForm.lng) : null;
+
+      const { data, error } = await supabase.rpc('admin_force_start_session', { 
+        p_employee_id: emp.id, 
+        p_session_type: checkInForm.type, 
+        p_local_date: format(new Date(), 'yyyy-MM-dd'),
+        p_timestamp,
+        p_lat,
+        p_lng
+      });
       if (error) throw error;
       if (data && data.work_session_id) {
         const { data: wsData } = await supabase.from('work_sessions').select('attendance_day_id').eq('id', data.work_session_id).single();
@@ -519,7 +535,10 @@ export default function EmployeeManager() {
                           ) : (
                             <button 
                               type="button"
-                              onClick={() => setCheckInEmp(emp)}
+                              onClick={() => {
+                                setCheckInEmp(emp);
+                                setCheckInForm({ type: 'office', timeMode: 'current', timestamp: '', lat: '', lng: '' });
+                              }}
                               className="admin-btn secondary"
                               title="Force Check In"
                               style={{ padding: '6px', border: 'none', color: '#16a34a', pointerEvents: 'auto', backgroundColor: '#dcfce7' }}
@@ -792,13 +811,65 @@ export default function EmployeeManager() {
             width: '100%', maxWidth: '400px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)', padding: '24px'
           }}>
             <h2 style={{ margin: '0 0 16px 0', fontSize: '20px' }}>Start Session for {checkInEmp.full_name}</h2>
-            <p style={{ margin: '0 0 24px 0', color: 'var(--admin-text-muted)' }}>Select the location type for this shift.</p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <button className="admin-btn primary" style={{ width: '100%', justifyContent: 'center' }} onClick={() => executeStartSession(checkInEmp, 'office')}>Office</button>
-              <button className="admin-btn primary" style={{ width: '100%', justifyContent: 'center', backgroundColor: '#3b82f6' }} onClick={() => executeStartSession(checkInEmp, 'wfh')}>Work From Home</button>
-              <button className="admin-btn primary" style={{ width: '100%', justifyContent: 'center', backgroundColor: '#8b5cf6' }} onClick={() => executeStartSession(checkInEmp, 'field')}>Field Work</button>
-              <button className="admin-btn secondary" style={{ width: '100%', justifyContent: 'center', marginTop: '12px' }} onClick={() => setCheckInEmp(null)}>Cancel</button>
-            </div>
+            <form onSubmit={executeStartSession} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <label style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '14px', fontWeight: '500' }}>
+                Location Type
+                <select 
+                  value={checkInForm.type} 
+                  onChange={(e) => setCheckInForm({...checkInForm, type: e.target.value})}
+                  style={{ width: '100%', boxSizing: 'border-box', padding: '10px', borderRadius: '8px', border: '1px solid var(--admin-border)', outline: 'none' }}
+                >
+                  <option value="office">Office</option>
+                  <option value="wfh">Work From Home</option>
+                  <option value="field_work">Field Work</option>
+                </select>
+              </label>
+
+              <label style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '14px', fontWeight: '500' }}>
+                Punch In Time
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', fontWeight: 'normal' }}>
+                    <input type="radio" name="timeMode" value="current" checked={checkInForm.timeMode === 'current'} onChange={() => setCheckInForm({...checkInForm, timeMode: 'current'})} />
+                    Current Time
+                  </label>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', fontWeight: 'normal' }}>
+                    <input type="radio" name="timeMode" value="custom" checked={checkInForm.timeMode === 'custom'} onChange={() => setCheckInForm({...checkInForm, timeMode: 'custom'})} />
+                    Manual Time
+                  </label>
+                </div>
+              </label>
+
+              {checkInForm.timeMode === 'custom' && (
+                <label style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '14px', fontWeight: '500' }}>
+                  Select Time
+                  <input 
+                    type="datetime-local" 
+                    value={checkInForm.timestamp}
+                    onChange={(e) => setCheckInForm({...checkInForm, timestamp: e.target.value})}
+                    style={{ width: '100%', boxSizing: 'border-box', padding: '10px', borderRadius: '8px', border: '1px solid var(--admin-border)', outline: 'none' }}
+                    required
+                  />
+                </label>
+              )}
+
+              {checkInForm.type === 'field_work' && (
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <label style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '14px', fontWeight: '500', flex: 1 }}>
+                    Latitude
+                    <input type="number" step="any" placeholder="e.g. 34.05" value={checkInForm.lat} onChange={(e) => setCheckInForm({...checkInForm, lat: e.target.value})} style={{ width: '100%', boxSizing: 'border-box', padding: '10px', borderRadius: '8px', border: '1px solid var(--admin-border)' }} />
+                  </label>
+                  <label style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '14px', fontWeight: '500', flex: 1 }}>
+                    Longitude
+                    <input type="number" step="any" placeholder="e.g. -118.24" value={checkInForm.lng} onChange={(e) => setCheckInForm({...checkInForm, lng: e.target.value})} style={{ width: '100%', boxSizing: 'border-box', padding: '10px', borderRadius: '8px', border: '1px solid var(--admin-border)' }} />
+                  </label>
+                </div>
+              )}
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px' }}>
+                <button type="submit" className="admin-btn primary" style={{ width: '100%', justifyContent: 'center' }}>Start Session</button>
+                <button type="button" className="admin-btn secondary" style={{ width: '100%', justifyContent: 'center' }} onClick={() => setCheckInEmp(null)}>Cancel</button>
+              </div>
+            </form>
           </div>
         </div>
       )}

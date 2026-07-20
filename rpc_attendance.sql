@@ -308,7 +308,14 @@ $$;
 -- 7. ADMIN FORCE START SESSION
 DROP FUNCTION IF EXISTS public.admin_force_start_session(UUID, public.session_type);
 
-CREATE OR REPLACE FUNCTION public.admin_force_start_session(p_employee_id UUID, p_session_type public.session_type, p_local_date DATE DEFAULT CURRENT_DATE)
+CREATE OR REPLACE FUNCTION public.admin_force_start_session(
+  p_employee_id UUID, 
+  p_session_type public.session_type, 
+  p_local_date DATE DEFAULT CURRENT_DATE,
+  p_timestamp TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  p_lat DOUBLE PRECISION DEFAULT NULL,
+  p_lng DOUBLE PRECISION DEFAULT NULL
+)
 RETURNS jsonb
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -349,12 +356,12 @@ BEGIN
 
   -- 3. Create work_session
   INSERT INTO public.work_sessions (attendance_day_id, employee_id, session_type, status, started_at, start_latitude, start_longitude)
-  VALUES (v_attendance_day_id, p_employee_id, p_session_type, 'working', NOW(), NULL, NULL)
+  VALUES (v_attendance_day_id, p_employee_id, p_session_type, 'working', p_timestamp, p_lat, p_lng)
   RETURNING id INTO v_work_session_id;
 
   -- 4. Log immutable event
-  INSERT INTO public.attendance_events (employee_id, attendance_day_id, event_type, session_type, timestamp)
-  VALUES (p_employee_id, v_attendance_day_id, 'session_started', p_session_type, NOW());
+  INSERT INTO public.attendance_events (employee_id, attendance_day_id, event_type, session_type, latitude, longitude, timestamp)
+  VALUES (p_employee_id, v_attendance_day_id, 'session_started', p_session_type, p_lat, p_lng, p_timestamp);
 
   RETURN jsonb_build_object('success', true, 'work_session_id', v_work_session_id, 'attendance_day_id', v_attendance_day_id);
 END;
