@@ -108,6 +108,7 @@ export default function AdminAttendance() {
     setEditLog(log);
     const sessions = (log.work_sessions || []).map(ws => ({
       id: ws.id,
+      session_type: ws.session_type,
       started_at: ws.started_at ? format(new Date(ws.started_at), "yyyy-MM-dd'T'HH:mm") : '',
       ended_at: ws.ended_at ? format(new Date(ws.ended_at), "yyyy-MM-dd'T'HH:mm") : '',
       original_started_at: ws.started_at,
