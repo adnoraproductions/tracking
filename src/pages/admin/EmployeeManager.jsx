@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase/client';
 import { createClient } from '@supabase/supabase-js';
-import { Loader2, Edit2, X, Plus, UserPlus, Trash2, Power, Settings, Smartphone, LogOut, LogIn, Building2, Home, MapPin, Calendar } from 'lucide-react';
+import { Loader2, Edit2, X, Plus, UserPlus, Trash2, Power, Settings, Smartphone, LogOut, LogIn, Building2, Home, MapPin, Calendar, Search } from 'lucide-react';
 import { format } from 'date-fns';
-import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
@@ -24,6 +24,59 @@ function MapLocationPicker({ lat, lng, onChange }) {
     },
   });
   return position === null ? null : <Marker position={position} />;
+}
+
+function MapSearchField({ onResult }) {
+  const map = useMap();
+  const [query, setQuery] = useState('');
+  const [searching, setSearching] = useState(false);
+
+  const handleSearch = async (e) => {
+    e.preventDefault();
+    if (!query) return;
+    setSearching(true);
+    try {
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`);
+      const data = await res.json();
+      if (data && data.length > 0) {
+        const { lat, lon } = data[0];
+        const newLat = parseFloat(lat);
+        const newLng = parseFloat(lon);
+        map.flyTo([newLat, newLng], 14);
+        if (onResult) {
+          onResult(newLat, newLng);
+        }
+      } else {
+        alert('Location not found');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error searching location');
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  return (
+    <div style={{ position: 'absolute', top: '10px', left: '50%', transform: 'translateX(-50%)', zIndex: 400, display: 'flex', gap: '4px', width: '80%', maxWidth: '300px', backgroundColor: 'white', padding: '4px', borderRadius: '8px', boxShadow: '0 2px 6px rgba(0,0,0,0.2)' }}>
+      <input 
+        type="text" 
+        value={query} 
+        onChange={e => setQuery(e.target.value)} 
+        onKeyDown={e => e.key === 'Enter' && handleSearch(e)}
+        placeholder="Search location..." 
+        style={{ flex: 1, border: 'none', outline: 'none', padding: '4px 8px', fontSize: '14px', borderRadius: '4px', color: '#000' }} 
+      />
+      <button 
+        type="button" 
+        onClick={handleSearch} 
+        disabled={searching}
+        style={{ background: 'var(--admin-primary)', color: 'white', border: 'none', borderRadius: '4px', padding: '4px 8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+      >
+        <Search size={16} />
+      </button>
+    </div>
+  );
 }
 
 // Create a secondary client specifically for signing up users so it doesn't overwrite the admin's session
@@ -886,6 +939,7 @@ export default function EmployeeManager() {
                   <div style={{ height: '200px', width: '100%', borderRadius: '12px', overflow: 'hidden', border: '1px solid var(--admin-border)' }}>
                     <MapContainer center={checkInForm.lat ? [checkInForm.lat, checkInForm.lng] : [10.0247, 76.3079]} zoom={13} style={{ height: '100%', width: '100%' }}>
                       <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                      <MapSearchField onResult={(lat, lng) => setCheckInForm({...checkInForm, lat, lng})} />
                       <MapLocationPicker 
                         lat={checkInForm.lat} 
                         lng={checkInForm.lng} 
