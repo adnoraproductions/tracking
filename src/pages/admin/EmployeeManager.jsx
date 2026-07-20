@@ -808,7 +808,8 @@ export default function EmployeeManager() {
         }}>
           <div style={{
             backgroundColor: 'var(--admin-card-bg)', borderRadius: '24px',
-            width: '100%', maxWidth: '400px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)', padding: '24px'
+            width: '100%', maxWidth: '400px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)', padding: '24px',
+            maxHeight: '90vh', overflowY: 'auto'
           }}>
             <h2 style={{ margin: '0 0 16px 0', fontSize: '20px' }}>Start Session for {checkInEmp.full_name}</h2>
             <form onSubmit={executeStartSession} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -883,7 +884,8 @@ export default function EmployeeManager() {
         }}>
           <div style={{
             backgroundColor: 'var(--admin-card-bg)', borderRadius: '24px',
-            width: '100%', maxWidth: '400px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)', padding: '24px'
+            width: '100%', maxWidth: '400px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)', padding: '24px',
+            maxHeight: '90vh', overflowY: 'auto'
           }}>
             <h2 style={{ margin: '0 0 16px 0', fontSize: '20px' }}>Session Actions: {checkOutEmp.full_name}</h2>
             <p style={{ margin: '0 0 24px 0', color: 'var(--admin-text-muted)' }}>Choose an action for their current shift.</p>
