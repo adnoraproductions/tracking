@@ -641,6 +641,28 @@ export default function AdminAttendance() {
                               </div>
                               <div style={{ display: 'flex', flexDirection: 'column' }}>
                               {log.attendance_events
+                                  .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
+                                  .filter((evt, idx, arr) => {
+                                    if (idx === 0) return true;
+                                    const prevEvt = arr[idx - 1];
+                                    
+                                    const getBadge = (e) => {
+                                      if (e.event_type === 'break_out') return 'BREAK';
+                                      if (e.event_type === 'break_in') return 'BACK';
+                                      if (e.event_type === 'session_started') return e.session_type ? e.session_type.toUpperCase() : 'IN';
+                                      if (e.event_type === 'session_ended' || e.event_type === 'day_ended') return 'OUT';
+                                      return 'SYS';
+                                    };
+                                    
+                                    const badge = getBadge(evt);
+                                    const prevBadge = getBadge(prevEvt);
+                                    
+                                    // If same badge and within 60 seconds, skip this event
+                                    const diffSecs = Math.abs(new Date(evt.timestamp) - new Date(prevEvt.timestamp)) / 1000;
+                                    if (badge === prevBadge && diffSecs < 60) return false;
+                                    
+                                    return true;
+                                  })
                                   .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
                                   .map((evt, idx, arr) => {
                                     const timeStr = format(new Date(evt.timestamp), 'hh:mm:ss a');
