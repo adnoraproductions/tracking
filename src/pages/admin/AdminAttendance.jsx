@@ -840,7 +840,9 @@ export default function AdminAttendance() {
               
               {editSessions.map((session, idx) => (
                 <div key={session.id} style={{ display: 'flex', flexDirection: 'column', gap: '12px', paddingBottom: '20px', borderBottom: idx < editSessions.length - 1 ? '1px dashed var(--admin-border)' : 'none' }}>
-                  <h5 style={{ margin: 0, fontSize: '14px', color: 'var(--admin-text-dark)' }}>Work Session {idx + 1}</h5>
+                  <h5 style={{ margin: 0, fontSize: '14px', color: 'var(--admin-text-dark)', textTransform: 'capitalize' }}>
+                    {session.session_type === 'wfh' ? 'WFH Session' : (session.session_type ? session.session_type.replace('_', ' ') + ' Session' : `Work Session ${idx + 1}`)}
+                  </h5>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px' }}>
                     <label style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '14px', fontWeight: '500', flex: '1 1 200px' }}>
                       Punch In Time
