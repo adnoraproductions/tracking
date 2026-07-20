@@ -1,8 +1,30 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase/client';
 import { createClient } from '@supabase/supabase-js';
-import { Loader2, Edit2, X, Plus, UserPlus, Trash2, Power, Settings, Smartphone, LogOut, LogIn } from 'lucide-react';
+import { Loader2, Edit2, X, Plus, UserPlus, Trash2, Power, Settings, Smartphone, LogOut, LogIn, Building2, Home, MapPin, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
+import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
+import L from 'leaflet';
+import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
+import markerIcon from 'leaflet/dist/images/marker-icon.png';
+import markerShadow from 'leaflet/dist/images/marker-shadow.png';
+
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconUrl: markerIcon,
+  iconRetinaUrl: markerIcon2x,
+  shadowUrl: markerShadow,
+});
+
+function MapLocationPicker({ lat, lng, onChange }) {
+  const position = lat && lng ? [lat, lng] : null;
+  useMapEvents({
+    click(e) {
+      onChange(e.latlng.lat, e.latlng.lng);
+    },
+  });
+  return position === null ? null : <Marker position={position} />;
+}
 
 // Create a secondary client specifically for signing up users so it doesn't overwrite the admin's session
 const adminAuthClient = createClient(
@@ -808,61 +830,74 @@ export default function EmployeeManager() {
         }}>
           <div style={{
             backgroundColor: 'var(--admin-card-bg)', borderRadius: '24px',
-            width: '100%', maxWidth: '400px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)', padding: '24px',
-            maxHeight: '90vh', overflowY: 'auto'
+            width: '100%', maxWidth: '500px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)', padding: '24px'
           }}>
             <h2 style={{ margin: '0 0 16px 0', fontSize: '20px' }}>Start Session for {checkInEmp.full_name}</h2>
-            <form onSubmit={executeStartSession} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <label style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '14px', fontWeight: '500' }}>
-                Location Type
-                <select 
-                  value={checkInForm.type} 
-                  onChange={(e) => setCheckInForm({...checkInForm, type: e.target.value})}
-                  style={{ width: '100%', boxSizing: 'border-box', padding: '10px', borderRadius: '8px', border: '1px solid var(--admin-border)', outline: 'none' }}
-                >
-                  <option value="office">Office</option>
-                  <option value="wfh">Work From Home</option>
-                  <option value="field_work">Field Work</option>
-                </select>
-              </label>
-
-              <label style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '14px', fontWeight: '500' }}>
-                Punch In Time
-                <div style={{ display: 'flex', gap: '12px' }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', fontWeight: 'normal' }}>
-                    <input type="radio" name="timeMode" value="current" checked={checkInForm.timeMode === 'current'} onChange={() => setCheckInForm({...checkInForm, timeMode: 'current'})} />
-                    Current Time
-                  </label>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', fontWeight: 'normal' }}>
-                    <input type="radio" name="timeMode" value="custom" checked={checkInForm.timeMode === 'custom'} onChange={() => setCheckInForm({...checkInForm, timeMode: 'custom'})} />
-                    Manual Time
-                  </label>
+            <form onSubmit={executeStartSession} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <span style={{ fontSize: '14px', fontWeight: '500' }}>Location Type</span>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
+                  <button type="button" onClick={() => setCheckInForm({...checkInForm, type: 'office'})} style={{ padding: '12px 8px', borderRadius: '12px', border: checkInForm.type === 'office' ? '2px solid var(--admin-primary)' : '1px solid var(--admin-border)', backgroundColor: checkInForm.type === 'office' ? 'var(--admin-primary-light)' : 'transparent', color: checkInForm.type === 'office' ? 'var(--admin-primary)' : 'var(--admin-text-dark)', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', transition: 'all 0.2s' }}>
+                    <Building2 size={20} />
+                    <span style={{ fontSize: '12px', fontWeight: '500' }}>Office</span>
+                  </button>
+                  <button type="button" onClick={() => setCheckInForm({...checkInForm, type: 'wfh'})} style={{ padding: '12px 8px', borderRadius: '12px', border: checkInForm.type === 'wfh' ? '2px solid #3b82f6' : '1px solid var(--admin-border)', backgroundColor: checkInForm.type === 'wfh' ? '#eff6ff' : 'transparent', color: checkInForm.type === 'wfh' ? '#3b82f6' : 'var(--admin-text-dark)', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', transition: 'all 0.2s' }}>
+                    <Home size={20} />
+                    <span style={{ fontSize: '12px', fontWeight: '500' }}>WFH</span>
+                  </button>
+                  <button type="button" onClick={() => setCheckInForm({...checkInForm, type: 'field_work'})} style={{ padding: '12px 8px', borderRadius: '12px', border: checkInForm.type === 'field_work' ? '2px solid #8b5cf6' : '1px solid var(--admin-border)', backgroundColor: checkInForm.type === 'field_work' ? '#f5f3ff' : 'transparent', color: checkInForm.type === 'field_work' ? '#8b5cf6' : 'var(--admin-text-dark)', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', transition: 'all 0.2s' }}>
+                    <MapPin size={20} />
+                    <span style={{ fontSize: '12px', fontWeight: '500' }}>Field</span>
+                  </button>
                 </div>
-              </label>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <span style={{ fontSize: '14px', fontWeight: '500' }}>Punch In Time</span>
+                <div style={{ display: 'flex', backgroundColor: 'var(--admin-bg)', borderRadius: '12px', padding: '4px' }}>
+                  <button type="button" onClick={() => setCheckInForm({...checkInForm, timeMode: 'current'})} style={{ flex: 1, padding: '8px', borderRadius: '8px', border: 'none', backgroundColor: checkInForm.timeMode === 'current' ? '#fff' : 'transparent', boxShadow: checkInForm.timeMode === 'current' ? '0 2px 4px rgba(0,0,0,0.05)' : 'none', color: checkInForm.timeMode === 'current' ? 'var(--admin-text-dark)' : 'var(--admin-text-muted)', fontSize: '14px', fontWeight: '500', cursor: 'pointer', transition: 'all 0.2s' }}>
+                    Current Time
+                  </button>
+                  <button type="button" onClick={() => setCheckInForm({...checkInForm, timeMode: 'custom'})} style={{ flex: 1, padding: '8px', borderRadius: '8px', border: 'none', backgroundColor: checkInForm.timeMode === 'custom' ? '#fff' : 'transparent', boxShadow: checkInForm.timeMode === 'custom' ? '0 2px 4px rgba(0,0,0,0.05)' : 'none', color: checkInForm.timeMode === 'custom' ? 'var(--admin-text-dark)' : 'var(--admin-text-muted)', fontSize: '14px', fontWeight: '500', cursor: 'pointer', transition: 'all 0.2s' }}>
+                    Manual Time
+                  </button>
+                </div>
+              </div>
 
               {checkInForm.timeMode === 'custom' && (
-                <label style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '14px', fontWeight: '500' }}>
-                  Select Time
-                  <input 
-                    type="datetime-local" 
-                    value={checkInForm.timestamp}
-                    onChange={(e) => setCheckInForm({...checkInForm, timestamp: e.target.value})}
-                    style={{ width: '100%', boxSizing: 'border-box', padding: '10px', borderRadius: '8px', border: '1px solid var(--admin-border)', outline: 'none' }}
-                    required
-                  />
-                </label>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <span style={{ fontSize: '14px', fontWeight: '500' }}>Select Date & Time</span>
+                  <div style={{ position: 'relative' }}>
+                    <Calendar size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--admin-text-muted)', pointerEvents: 'none' }} />
+                    <input 
+                      type="datetime-local" 
+                      value={checkInForm.timestamp}
+                      onChange={(e) => setCheckInForm({...checkInForm, timestamp: e.target.value})}
+                      style={{ width: '100%', boxSizing: 'border-box', padding: '12px 12px 12px 40px', borderRadius: '12px', border: '1px solid var(--admin-border)', outline: 'none', fontSize: '14px', fontFamily: 'inherit', color: 'var(--admin-text-dark)' }}
+                      required
+                    />
+                  </div>
+                </div>
               )}
 
               {checkInForm.type === 'field_work' && (
-                <div style={{ display: 'flex', gap: '12px' }}>
-                  <label style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '14px', fontWeight: '500', flex: 1 }}>
-                    Latitude
-                    <input type="number" step="any" placeholder="e.g. 34.05" value={checkInForm.lat} onChange={(e) => setCheckInForm({...checkInForm, lat: e.target.value})} style={{ width: '100%', boxSizing: 'border-box', padding: '10px', borderRadius: '8px', border: '1px solid var(--admin-border)' }} />
-                  </label>
-                  <label style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '14px', fontWeight: '500', flex: 1 }}>
-                    Longitude
-                    <input type="number" step="any" placeholder="e.g. -118.24" value={checkInForm.lng} onChange={(e) => setCheckInForm({...checkInForm, lng: e.target.value})} style={{ width: '100%', boxSizing: 'border-box', padding: '10px', borderRadius: '8px', border: '1px solid var(--admin-border)' }} />
-                  </label>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <span style={{ fontSize: '14px', fontWeight: '500' }}>Select Location on Map</span>
+                  <div style={{ height: '200px', width: '100%', borderRadius: '12px', overflow: 'hidden', border: '1px solid var(--admin-border)' }}>
+                    <MapContainer center={checkInForm.lat ? [checkInForm.lat, checkInForm.lng] : [10.0247, 76.3079]} zoom={13} style={{ height: '100%', width: '100%' }}>
+                      <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                      <MapLocationPicker 
+                        lat={checkInForm.lat} 
+                        lng={checkInForm.lng} 
+                        onChange={(lat, lng) => setCheckInForm({...checkInForm, lat, lng})} 
+                      />
+                    </MapContainer>
+                  </div>
+                  {(checkInForm.lat && checkInForm.lng) && (
+                    <div style={{ fontSize: '12px', color: 'var(--admin-text-muted)' }}>
+                      Selected: {checkInForm.lat.toFixed(4)}, {checkInForm.lng.toFixed(4)}
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -884,8 +919,7 @@ export default function EmployeeManager() {
         }}>
           <div style={{
             backgroundColor: 'var(--admin-card-bg)', borderRadius: '24px',
-            width: '100%', maxWidth: '400px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)', padding: '24px',
-            maxHeight: '90vh', overflowY: 'auto'
+            width: '100%', maxWidth: '400px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)', padding: '24px'
           }}>
             <h2 style={{ margin: '0 0 16px 0', fontSize: '20px' }}>Session Actions: {checkOutEmp.full_name}</h2>
             <p style={{ margin: '0 0 24px 0', color: 'var(--admin-text-muted)' }}>Choose an action for their current shift.</p>
