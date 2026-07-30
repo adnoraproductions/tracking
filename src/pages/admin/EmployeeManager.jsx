@@ -3,6 +3,8 @@ import { supabase } from '../../lib/supabase/client';
 import { createClient } from '@supabase/supabase-js';
 import { Loader2, Edit2, X, Plus, UserPlus, Trash2, Power, Settings, Smartphone, LogOut, LogIn, Building2, Home, MapPin, Calendar, Search } from 'lucide-react';
 import { format } from 'date-fns';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
@@ -116,7 +118,7 @@ export default function EmployeeManager() {
 
   const [activeSessions, setActiveSessions] = useState({});
   const [checkInEmp, setCheckInEmp] = useState(null);
-  const [checkInForm, setCheckInForm] = useState({ type: 'office', timeMode: 'current', timestamp: '', lat: '', lng: '' });
+  const [checkInForm, setCheckInForm] = useState({ type: 'office', timeMode: 'current', timestamp: new Date(), lat: '', lng: '' });
   const [checkOutEmp, setCheckOutEmp] = useState(null);
 
   useEffect(() => {
@@ -920,13 +922,19 @@ export default function EmployeeManager() {
               {checkInForm.timeMode === 'custom' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   <span style={{ fontSize: '14px', fontWeight: '500' }}>Select Date & Time</span>
-                  <div style={{ position: 'relative' }}>
-                    <Calendar size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--admin-text-muted)', pointerEvents: 'none' }} />
-                    <input 
-                      type="datetime-local" 
-                      value={checkInForm.timestamp}
-                      onChange={(e) => setCheckInForm({...checkInForm, timestamp: e.target.value})}
-                      style={{ width: '100%', boxSizing: 'border-box', padding: '12px 12px 12px 40px', borderRadius: '12px', border: '1px solid var(--admin-border)', outline: 'none', fontSize: '14px', fontFamily: 'inherit', color: 'var(--admin-text-dark)' }}
+                  <div style={{ position: 'relative', width: '100%' }}>
+                    <Calendar size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--admin-text-muted)', pointerEvents: 'none', zIndex: 10 }} />
+                    <DatePicker 
+                      selected={checkInForm.timestamp}
+                      onChange={(date) => setCheckInForm({...checkInForm, timestamp: date})}
+                      showTimeSelect
+                      timeFormat="h:mm aa"
+                      timeIntervals={15}
+                      timeCaption="Time"
+                      dateFormat="MMMM d, yyyy h:mm aa"
+                      className="custom-datepicker-input"
+                      wrapperClassName="custom-datepicker-wrapper"
+                      popperClassName="custom-datepicker-popper"
                       required
                     />
                   </div>

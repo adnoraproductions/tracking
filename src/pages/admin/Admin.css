@@ -428,7 +428,73 @@ body {
   cursor: pointer;
   padding: 8px;
   border-radius: 50%;
-  transition: background-color 0.2s;
+  transition: color 0.2s, background-color 0.2s;
+}
+
+/* Custom DatePicker Styles for CheckIn Modal */
+.custom-datepicker-wrapper {
+  width: 100%;
+}
+
+.custom-datepicker-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 12px 12px 40px;
+  border-radius: 12px;
+  border: 1px solid var(--admin-border);
+  outline: none;
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--admin-text-dark);
+  background-color: white;
+  transition: all 0.2s;
+}
+
+.custom-datepicker-input:focus {
+  border-color: var(--admin-primary);
+  box-shadow: 0 0 0 3px var(--admin-primary-light);
+}
+
+.custom-datepicker-popper {
+  z-index: 1000 !important;
+}
+
+.react-datepicker {
+  font-family: inherit !important;
+  border: none !important;
+  border-radius: 16px !important;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.15) !important;
+  overflow: hidden;
+}
+
+.react-datepicker__header {
+  background-color: #f8fafc !important;
+  border-bottom: 1px solid var(--admin-border) !important;
+  padding-top: 16px !important;
+}
+
+.react-datepicker__current-month, .react-datepicker-time__header {
+  color: var(--admin-text-dark) !important;
+  font-weight: 600 !important;
+}
+
+.react-datepicker__day--selected, .react-datepicker__day--keyboard-selected {
+  background-color: var(--admin-primary) !important;
+  color: white !important;
+  border-radius: 8px !important;
+}
+
+.react-datepicker__day:hover {
+  border-radius: 8px !important;
+}
+
+.react-datepicker__time-container {
+  border-left: 1px solid var(--admin-border) !important;
+}
+
+.react-datepicker__time-list-item--selected {
+  background-color: var(--admin-primary) !important;
+  color: white !important;
 }
 
 @media (hover: hover) {
