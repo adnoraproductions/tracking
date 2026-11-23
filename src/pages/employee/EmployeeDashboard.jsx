@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase/client';
 import { useGeolocation } from '../../hooks/useGeolocation';
-import { Loader2, ChevronLeft, ChevronRight, Clock, RefreshCw, MapPin, Home, Briefcase, Calendar } from 'lucide-react';
+import { Loader2, ChevronLeft, ChevronRight, Clock, RefreshCw, MapPin, Home, Briefcase, Calendar, ClipboardList } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { format, differenceInSeconds } from 'date-fns';
 import CalendarModal from '../../components/CalendarModal';
 
@@ -479,8 +480,8 @@ export default function EmployeeDashboard() {
             <span style={{ fontSize: '24px' }}>{profile?.full_name?.charAt(0)}</span>
           </div>
           <div className="emp-name-box">
-            <h2>Employee</h2>
-            <p>ID: {profile?.employee_code || '---'}</p>
+            <h2>{profile?.full_name || 'Employee'}</h2>
+            <p>{[profile?.designation, profile?.employee_code && `ID ${profile.employee_code}`].filter(Boolean).join(' · ') || 'Employee'}</p>
           </div>
         </div>
       </div>
@@ -614,6 +615,18 @@ export default function EmployeeDashboard() {
               {error}
             </div>
           )}
+
+          {/* Shortcuts */}
+          <div className="grid-2" style={{ gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '12px' }}>
+            <Link to="/employee/tasks" className="card stat tone-green" style={{ textDecoration: 'none', color: 'inherit' }}>
+              <div className="stat-top"><span>Daily tasks</span><span className="stat-icon"><ClipboardList size={16} /></span></div>
+              <div className="strong small" style={{ marginTop: 10 }}>Log today's work →</div>
+            </Link>
+            <Link to="/employee/leaves" className="card stat tone-blue" style={{ textDecoration: 'none', color: 'inherit' }}>
+              <div className="stat-top"><span>Leaves</span><span className="stat-icon"><Calendar size={16} /></span></div>
+              <div className="strong small" style={{ marginTop: 10 }}>Apply or check balance →</div>
+            </Link>
+          </div>
         </div>
       </div>
 

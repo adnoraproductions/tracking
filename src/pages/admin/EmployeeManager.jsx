@@ -544,7 +544,13 @@ export default function EmployeeManager() {
                           >
                             Employee
                           </button>
-                          <button 
+                          <button
+                            onClick={() => setEditForm({...editForm, role: 'manager'})}
+                            style={{ flex: 1, padding: '6px', borderRadius: '6px', border: 'none', backgroundColor: editForm.role === 'manager' ? 'white' : 'transparent', color: editForm.role === 'manager' ? 'var(--admin-text-dark)' : 'var(--admin-text-muted)', fontWeight: editForm.role === 'manager' ? '600' : '500', boxShadow: editForm.role === 'manager' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none', cursor: 'pointer', transition: 'all 0.2s', fontSize: '13px' }}
+                          >
+                            Manager
+                          </button>
+                          <button
                             onClick={() => setEditForm({...editForm, role: 'admin'})}
                             style={{ flex: 1, padding: '6px', borderRadius: '6px', border: 'none', backgroundColor: editForm.role === 'admin' ? 'white' : 'transparent', color: editForm.role === 'admin' ? 'var(--admin-text-dark)' : 'var(--admin-text-muted)', fontWeight: editForm.role === 'admin' ? '600' : '500', boxShadow: editForm.role === 'admin' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none', cursor: 'pointer', transition: 'all 0.2s', fontSize: '13px' }}
                           >
@@ -592,7 +598,7 @@ export default function EmployeeManager() {
                         )}
                       </td>
                       <td data-label="Role">
-                        <span className={`admin-badge ${emp.role === 'admin' ? 'red' : 'gray'}`}>
+                        <span className={`admin-badge ${emp.role === 'admin' ? 'red' : emp.role === 'manager' ? 'orange' : 'gray'}`}>
                           {emp.role || 'employee'}
                         </span>
                       </td>

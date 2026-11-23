@@ -1,53 +1,164 @@
+/* ==========================================================================
+   Adnora design tokens — one flat, premium light theme for the whole app.
+   Legacy variable names (--skeuo-*, --emp-*, --admin-*) are mapped onto the
+   new tokens so older screens pick up the new look automatically.
+   ========================================================================== */
 :root {
-  /* Light Theme Defaults */
-  --bg-color: #F7F8FA;
-  --surface-color: #FFFFFF;
-  --primary-color: #2563EB;
-  --text-color: #111827;
-  --text-secondary: #6B7280;
-  --border-color: #E5E7EB;
+  color-scheme: light;
 
-  /* Spacing */
-  --spacing-8: 8px;
-  --spacing-16: 16px;
-  --spacing-24: 24px;
-  --spacing-32: 32px;
+  /* Core palette */
+  --bg: #f5f6f8;
+  --surface: #ffffff;
+  --surface-2: #f1f3f6;
+  --surface-3: #e9ecf1;
+  --border: #e4e7ec;
+  --border-strong: #d0d5dd;
+  --text: #101828;
+  --text-2: #344054;
+  --muted: #667085;
+  --faint: #98a2b3;
 
-  /* Border Radius */
-  --radius-12: 12px;
-  --radius-16: 16px;
-  --radius-24: 24px;
+  --brand: #0e9f6e;
+  --brand-600: #057a55;
+  --brand-50: #ecfdf3;
+  --brand-100: #d1fadf;
 
-  /* Shadows */
-  --shadow-premium: 0 4px 24px rgba(0, 0, 0, 0.04);
-  
-  /* Typography */
-  --font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  --ink: #0b1220;          /* deep navy for hero surfaces */
+  --ink-2: #17213a;
+
+  /* Dark green brand surface for summary / hero cards (matches the sidebar) */
+  --brand-surface:
+    radial-gradient(90% 120% at 100% 0%, rgba(124, 181, 24, 0.34) 0%, rgba(124, 181, 24, 0.10) 40%, transparent 70%),
+    radial-gradient(60% 80% at 0% 100%, rgba(124, 181, 24, 0.16) 0%, transparent 70%),
+    linear-gradient(160deg, #0d1409 0%, #060906 100%);
+  --brand-lime: #7cb518;
+
+  --blue: #2563eb;   --blue-50: #eff4ff;
+  --amber: #d97706;  --amber-50: #fffaeb;
+  --red: #dc2626;    --red-50: #fef3f2;
+  --violet: #7c3aed; --violet-50: #f5f3ff;
+  --gold: #b7791f;   --gold-50: #fdf6e3;
+
+  /* Shape & depth */
+  --r-sm: 10px;
+  --r-md: 14px;
+  --r-lg: 18px;
+  --r-xl: 22px;
+  --shadow-xs: 0 1px 2px rgba(16, 24, 40, 0.05);
+  --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.04), 0 1px 3px rgba(16, 24, 40, 0.06);
+  --shadow-md: 0 4px 16px -4px rgba(16, 24, 40, 0.10), 0 2px 4px -2px rgba(16, 24, 40, 0.05);
+  --shadow-lg: 0 20px 40px -12px rgba(16, 24, 40, 0.22);
+  --ring: 0 0 0 4px rgba(14, 159, 110, 0.14);
+
+  --font: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --sidebar-w: 252px;
+  --topbar-h: 60px;
+  --tabbar-h: 68px;
+
+  /* ---- Legacy aliases (do not use in new code) ---- */
+  --bg-color: var(--bg);
+  --surface-color: var(--surface);
+  --primary-color: var(--brand);
+  --text-color: var(--text);
+  --text-secondary: var(--muted);
+  --border-color: var(--border);
+  --shadow-premium: var(--shadow-sm);
+  --font-family: var(--font);
+
+  --skeuo-bg: var(--surface-2);
+  --skeuo-surface: var(--surface);
+  --skeuo-highlight: var(--border);
+  --skeuo-shadow-light: rgba(16, 24, 40, 0.06);
+  --skeuo-shadow-dark: rgba(16, 24, 40, 0.08);
+  --skeuo-outer: var(--shadow-sm);
+  --skeuo-inner: none;
+  --skeuo-pressed: none;
+  --skeuo-radius-sm: var(--r-sm);
+  --skeuo-radius-md: var(--r-md);
+  --skeuo-radius-lg: var(--r-lg);
+
+  --emp-bg: var(--bg);
+  --emp-card-dark: var(--ink);
+  --emp-card-light: var(--surface);
+  --emp-primary: var(--brand);
+  --emp-primary-light: var(--brand-100);
+  --emp-text-dark: var(--text);
+  --emp-text-light: #ffffff;
+  --emp-text-muted: var(--muted);
+  --emp-border: var(--border);
+  --emp-danger: var(--red);
+  --emp-radius-xl: var(--r-xl);
+  --emp-radius-lg: var(--r-lg);
+
+  --admin-bg: var(--bg);
+  --admin-sidebar: var(--surface);
+  --admin-sidebar-text: var(--muted);
+  --admin-sidebar-hover: var(--surface-2);
+  --admin-card-bg: var(--surface);
+  --admin-primary: var(--brand);
+  --admin-primary-light: var(--brand-100);
+  --admin-text-dark: var(--text);
+  --admin-text-muted: var(--muted);
+  --admin-border: var(--border);
+  --admin-danger: var(--red);
+  --admin-radius-lg: var(--r-lg);
+  --admin-radius-xl: var(--r-xl);
+
+  --glass-bg: var(--surface);
+  --glass-bg-hover: var(--surface-2);
+  --glass-border: var(--border);
+  --glass-shadow: var(--shadow-sm);
+  --glass-blur: none;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    /* Dark Theme Override */
-    --bg-color: #0B0F14;
-    --surface-color: #111827;
-    --primary-color: #60A5FA;
-    --text-color: #F9FAFB;
-    --text-secondary: #94A3B8;
-    --border-color: #1F2937;
-    
-    --shadow-premium: 0 4px 24px rgba(0, 0, 0, 0.2);
-  }
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
   margin: 0;
-  background-color: var(--bg-color);
-  color: var(--text-color);
-  font-family: var(--font-family);
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 15px;
+  line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: 'cv11', 'ss01';
+}
+
+input,
+select,
+textarea,
+button {
+  font-family: inherit;
+  font-size: inherit;
+}
+
+/* Avoid iOS zoom on focus */
+@media (max-width: 768px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
 }
 
 * {
-  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
 }
