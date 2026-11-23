@@ -1578,3 +1578,202 @@
     -webkit-backdrop-filter: none;
   }
 }
+
+/* ==========================================================================
+   Payroll + expenses extras
+   ========================================================================== */
+.payroll-split {
+  display: flex;
+  gap: 24px;
+  text-align: right;
+}
+
+.payroll-split .strong {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.hero-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.step {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  box-shadow: var(--shadow-xs);
+  text-align: left;
+  cursor: pointer;
+  color: var(--text);
+}
+
+.step:disabled {
+  cursor: default;
+}
+
+.step:not(:disabled):hover {
+  border-color: var(--border-strong);
+}
+
+.step-num {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  background: var(--surface-3);
+  color: var(--text-2);
+}
+
+.step.done .step-num {
+  background: var(--brand-lime);
+  color: #0a0f08;
+}
+
+.step-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.2;
+}
+
+.step-detail {
+  display: block;
+  font-size: 12px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 560px) {
+  .steps {
+    gap: 6px;
+  }
+
+  .step {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    padding: 10px;
+  }
+
+  .payroll-split {
+    width: 100%;
+    justify-content: space-between;
+    text-align: left;
+  }
+}
+
+.link-btn {
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-weight: 650;
+  color: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.stack-xs {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.table tfoot td {
+  background: var(--surface-2);
+  border-top: 1px solid var(--border);
+  border-bottom: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 760px) {
+  .table.responsive tfoot tr {
+    background: var(--surface-2);
+  }
+
+  .table.responsive tfoot td {
+    background: transparent;
+    border-top: 0;
+  }
+}
+
+.split-bar {
+  display: flex;
+  height: 10px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.12);
+  gap: 2px;
+}
+
+.split-bar > span {
+  display: block;
+  height: 100%;
+}
+
+.legend-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 6px;
+}
+
+.grid-main-side {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+@media (max-width: 960px) {
+  .grid-main-side {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Card headers with several buttons wrap instead of squeezing the title */
+.card-head {
+  flex-wrap: wrap;
+}
+
+.card-head > div:first-child {
+  flex: 1 1 220px;
+}
+
+.card-head > .row {
+  flex-wrap: wrap;
+}
+
+@media (max-width: 640px) {
+  .card-head > .row {
+    width: 100%;
+  }
+}

@@ -1,10 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { eachDayOfInterval, endOfMonth, format, isAfter, startOfDay } from 'date-fns';
-import { Banknote, Settings2, RefreshCw, Download, CheckCircle2, Info } from 'lucide-react';
+import { Banknote, Settings2, RefreshCw, Download, CheckCircle2, Info, Check, TrendingDown, TrendingUp } from 'lucide-react';
 import { supabase } from '../../lib/supabase/client';
 import { tierFor, friendlyError, cleanDbMessage } from '../../lib/hr';
 import { money, monthRange, round1, ymd } from '../../lib/format';
-import { Card, Stat, Button, Badge, TierBadge, EmptyState, Alert, Loading, Modal, Field, Avatar } from '../../components/ui';
+import { Card, Button, Badge, TierBadge, EmptyState, Alert, Loading, Modal, Field, Avatar, useConfirm } from '../../components/ui';
 
 function workingDates(from, to, perWeek, holidaySet) {
   if (isAfter(from, to)) return [];
@@ -26,6 +26,7 @@ export default function Payroll({ month, currency, toast, settings }) {
   const [busy, setBusy] = useState(false);
   const [edit, setEdit] = useState(null);
   const [salaryOpen, setSalaryOpen] = useState(false);
+  const confirm = useConfirm();
   const { start, startStr, endStr } = monthRange(month);
 
   const load = async () => {
@@ -114,19 +115,26 @@ export default function Payroll({ month, currency, toast, settings }) {
   const payable = rows.filter((r) => r.salary > 0 || r.record);
   const totals = payable.reduce(
     (s, r) => {
-      s.net += Number(r.shown.net_pay);
-      if (r.record?.status === 'paid') s.paid += Number(r.record.net_pay);
-      s.incentive += Number(r.shown.incentive);
-      s.deduction += Number(r.shown.attendance_deduction);
+      const v = r.shown;
+      s.base += Number(v.base_salary);
+      s.net += Number(v.net_pay);
+      if (r.record?.status === 'paid') {
+        s.paid += Number(r.record.net_pay);
+        s.paidCount += 1;
+      }
+      if (r.record) s.savedCount += 1;
+      s.minus += Number(v.attendance_deduction) + Number(v.other_deduction);
+      s.plus += Number(v.incentive) + Number(v.bonus);
       return s;
     },
-    { net: 0, paid: 0, incentive: 0, deduction: 0 },
+    { base: 0, net: 0, paid: 0, paidCount: 0, savedCount: 0, minus: 0, plus: 0 },
   );
+  const remaining = Math.max(0, totals.net - totals.paid);
 
   const generate = async () => {
     const toSave = payable.filter((r) => r.record?.status !== 'paid').map((r) => r.computed);
-    if (!toSave.length) return toast('Nothing to generate');
-    setBusy(true);
+    if (!toSave.length) return toast('Everyone is already paid for this month');
+    setBusy('calc');
     const { error: err } = await supabase.from('payroll_records').upsert(toSave, { onConflict: 'employee_id,month' });
     setBusy(false);
     if (err) return toast(cleanDbMessage(err), 'error');
@@ -134,11 +142,34 @@ export default function Payroll({ month, currency, toast, settings }) {
     load();
   };
 
+  // Mark one or more people as paid today (uses their saved draft if any, otherwise the calculation)
+  const markPaid = async (list) => {
+    const rowsToPay = list.filter((r) => r.record?.status !== 'paid');
+    if (!rowsToPay.length) return;
+    const total = rowsToPay.reduce((s, r) => s + Number(r.shown.net_pay), 0);
+    const ok = await confirm({
+      title: rowsToPay.length > 1 ? `Pay ${rowsToPay.length} employees?` : `Pay ${rowsToPay[0].person.full_name}?`,
+      message: `${money(total, currency)} will be marked as paid today (${format(new Date(), 'dd MMM yyyy')}). It will also count in this month's expenses.`,
+      confirmLabel: 'Mark as paid',
+    });
+    if (!ok) return;
+    setBusy('pay');
+    const payload = rowsToPay.map((r) => {
+      const { id, created_at, updated_at, ...base } = r.record || r.computed;
+      return { ...base, status: 'paid', paid_on: ymd(new Date()), net_pay: calcNet(base) };
+    });
+    const { error: err } = await supabase.from('payroll_records').upsert(payload, { onConflict: 'employee_id,month' });
+    setBusy(false);
+    if (err) return toast(cleanDbMessage(err), 'error');
+    toast(rowsToPay.length > 1 ? `${rowsToPay.length} salaries marked as paid` : 'Salary marked as paid');
+    load();
+  };
+
   const exportCsv = () => {
     const header = ['Employee', 'Code', 'Base salary', 'Working days', 'Present', 'Paid leave', 'Unpaid days', 'Attendance deduction', 'Points', 'Tier', 'Incentive', 'Bonus', 'Other deduction', 'Net pay', 'Status', 'Paid on'];
     const lines = payable.map((r) => {
       const s = r.shown;
-      return [r.person.full_name, r.person.employee_code || '', s.base_salary, s.working_days, s.present_days, s.paid_leave_days, s.unpaid_days, s.attendance_deduction, s.points, s.tier, s.incentive, s.bonus, s.other_deduction, s.net_pay, r.record?.status || 'preview', r.record?.paid_on || '']
+      return [r.person.full_name, r.person.employee_code || '', s.base_salary, s.working_days, s.present_days, s.paid_leave_days, s.unpaid_days, s.attendance_deduction, s.points, s.tier, s.incentive, s.bonus, s.other_deduction, s.net_pay, r.record?.status || 'not saved', r.record?.paid_on || '']
         .map((v) => `"${String(v ?? '').replace(/"/g, '""')}"`)
         .join(',');
     });
@@ -154,37 +185,89 @@ export default function Payroll({ month, currency, toast, settings }) {
   if (error) return <Alert>{error}</Alert>;
 
   const isCurrent = format(month, 'yyyy-MM') === format(new Date(), 'yyyy-MM');
-  const missingSalary = rows.filter((r) => r.salary === 0 && !r.record && r.person.role !== 'admin');
+  const missingSalary = rows.filter((r) => r.salary === 0 && !r.record);
+  const staffCount = rows.length;
+  const salariesSet = staffCount - missingSalary.length;
+  const paidPct = totals.net > 0 ? Math.min(100, (totals.paid / totals.net) * 100) : 0;
+  const unpaidRows = payable.filter((r) => r.record?.status !== 'paid');
+
+  const steps = [
+    { n: 1, label: 'Salaries set', detail: `${salariesSet}/${staffCount}`, done: staffCount > 0 && missingSalary.length === 0, action: () => setSalaryOpen(true) },
+    { n: 2, label: 'Calculated', detail: `${totals.savedCount}/${payable.length}`, done: payable.length > 0 && totals.savedCount === payable.length, action: generate },
+    { n: 3, label: 'Paid', detail: `${totals.paidCount}/${payable.length}`, done: payable.length > 0 && totals.paidCount === payable.length },
+  ];
 
   return (
     <div className="stack">
-      <div className="grid-stats">
-        <Stat label="Total payroll" value={money(totals.net, currency)} sub={`${payable.length} employees`} icon={Banknote} tone="green" />
-        <Stat label="Already paid" value={money(totals.paid, currency)} sub={`${money(totals.net - totals.paid, currency)} remaining`} icon={CheckCircle2} tone="blue" />
-        <Stat label="Incentives" value={money(totals.incentive, currency)} sub={`${settings.tier3_name} tier`} icon={Banknote} tone="amber" />
-        <Stat label="Attendance deductions" value={money(totals.deduction, currency)} sub="Unpaid / absent days" icon={Banknote} tone="red" />
+      {/* Summary */}
+      <div className="hero">
+        <div className="row-between wrap" style={{ alignItems: 'flex-start', gap: 16 }}>
+          <div>
+            <div className="muted small">Net payroll · {format(month, 'MMMM yyyy')}</div>
+            <div className="hero-value">{money(totals.net, currency)}</div>
+            <div className="muted small" style={{ marginTop: 4 }}>
+              {payable.length} employee{payable.length === 1 ? '' : 's'} · base {money(totals.base, currency)}
+            </div>
+          </div>
+          <div className="payroll-split">
+            <div>
+              <div className="muted xs">Paid</div>
+              <div className="strong tabular" style={{ color: '#a3d64a' }}>{money(totals.paid, currency)}</div>
+            </div>
+            <div>
+              <div className="muted xs">To pay</div>
+              <div className="strong tabular">{money(remaining, currency)}</div>
+            </div>
+          </div>
+        </div>
+        <div className="progress" style={{ marginTop: 18, background: 'rgba(255,255,255,0.12)' }}>
+          <span style={{ width: `${paidPct}%`, background: 'var(--brand-lime)' }} />
+        </div>
+        <div className="row wrap" style={{ marginTop: 16, gap: 8 }}>
+          <span className="hero-chip"><TrendingDown size={13} /> Deductions −{money(totals.minus, currency)}</span>
+          <span className="hero-chip"><TrendingUp size={13} /> Incentives &amp; bonus +{money(totals.plus, currency)}</span>
+        </div>
+      </div>
+
+      {/* Steps */}
+      <div className="steps">
+        {steps.map((st) => (
+          <button key={st.n} type="button" className={`step ${st.done ? 'done' : ''}`} onClick={st.action} disabled={!st.action}>
+            <span className="step-num">{st.done ? <Check size={14} /> : st.n}</span>
+            <span>
+              <span className="step-label">{st.label}</span>
+              <span className="step-detail">{st.detail}</span>
+            </span>
+          </button>
+        ))}
       </div>
 
       {isCurrent && (
         <Alert tone="blue" icon={Info}>
-          {format(month, 'MMMM')} is still running — absences are counted only up to today. Generate the final payroll after the month ends.
+          {format(month, 'MMMM')} is still running, so absences are counted only up to today. Calculate the final payroll after the month ends.
         </Alert>
       )}
       {missingSalary.length > 0 && (
         <Alert tone="amber" icon={Info}>
-          No salary set for {missingSalary.map((r) => r.person.full_name).join(', ')}. Use “Salaries” to add them.
+          No salary set for {missingSalary.map((r) => r.person.full_name).join(', ')}.{' '}
+          <button type="button" className="link-btn" onClick={() => setSalaryOpen(true)}>Set salaries</button>
         </Alert>
       )}
 
       <Card
-        title={`Payroll · ${format(month, 'MMMM yyyy')}`}
-        subtitle="Salary − (per-day rate × unpaid days) + incentive + bonus − other deductions"
+        title="Employees"
+        subtitle="Tap a row to review the payslip, adjust bonus or deductions, or reopen it"
         pad={false}
         actions={
           <>
             <Button size="sm" icon={Settings2} onClick={() => setSalaryOpen(true)}>Salaries</Button>
             <Button size="sm" icon={Download} onClick={exportCsv} disabled={!payable.length}>CSV</Button>
-            <Button size="sm" variant="primary" icon={RefreshCw} loading={busy} onClick={generate}>Calculate</Button>
+            <Button size="sm" icon={RefreshCw} loading={busy === 'calc'} onClick={generate}>Calculate</Button>
+            {unpaidRows.length > 0 && (
+              <Button size="sm" variant="primary" icon={CheckCircle2} loading={busy === 'pay'} onClick={() => markPaid(unpaidRows)}>
+                Pay all
+              </Button>
+            )}
           </>
         }
       >
@@ -192,47 +275,79 @@ export default function Payroll({ month, currency, toast, settings }) {
           <EmptyState icon={Banknote} title="No salaries set up" text="Add monthly salaries for your team to start running payroll." action={<Button variant="primary" onClick={() => setSalaryOpen(true)}>Set salaries</Button>} />
         ) : (
           <div className="table-wrap">
-            <table className="table responsive">
+            <table className="table responsive payroll-table">
               <thead>
                 <tr>
                   <th>Employee</th>
+                  <th>Attendance</th>
                   <th className="num">Salary</th>
-                  <th className="num">Present</th>
-                  <th className="num">Paid leave</th>
-                  <th className="num">Unpaid</th>
-                  <th className="num">Deduction</th>
-                  <th>Tier</th>
-                  <th className="num">Incentive</th>
+                  <th className="num">Adjustments</th>
                   <th className="num">Net pay</th>
-                  <th>Status</th>
+                  <th style={{ textAlign: 'right' }}>Status</th>
                 </tr>
               </thead>
               <tbody>
                 {payable.map((r) => {
                   const s = r.shown;
+                  const minus = Number(s.attendance_deduction) + Number(s.other_deduction);
+                  const plus = Number(s.incentive) + Number(s.bonus);
+                  const paid = r.record?.status === 'paid';
                   return (
                     <tr key={r.person.id} onClick={() => setEdit(r)} style={{ cursor: 'pointer' }}>
                       <td data-label="">
                         <div className="row">
                           <Avatar name={r.person.full_name} size="sm" />
-                          <span className="strong">{r.person.full_name}</span>
+                          <div style={{ textAlign: 'left', minWidth: 0 }}>
+                            <div className="strong truncate">{r.person.full_name}</div>
+                            <div className="row" style={{ gap: 6, marginTop: 2 }}>
+                              <span className="xs muted truncate">{r.person.designation || r.person.employee_code || ''}</span>
+                              {r.tier.level === 3 && <TierBadge tier={{ level: 3, name: s.tier || r.tier.name }} />}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td data-label="Attendance">
+                        <div className="small">{round1(s.present_days)}/{round1(s.working_days)} days</div>
+                        <div className="xs muted">
+                          {Number(s.paid_leave_days) > 0 && `${round1(s.paid_leave_days)} paid leave · `}
+                          <span className={Number(s.unpaid_days) > 0 ? 'text-red' : ''}>{round1(s.unpaid_days)} unpaid</span>
                         </div>
                       </td>
                       <td data-label="Salary" className="num">{money(s.base_salary, currency)}</td>
-                      <td data-label="Present" className="num">{round1(s.present_days)}/{round1(s.working_days)}</td>
-                      <td data-label="Paid leave" className="num">{round1(s.paid_leave_days)}</td>
-                      <td data-label="Unpaid days" className={`num ${Number(s.unpaid_days) > 0 ? 'text-red strong' : ''}`}>{round1(s.unpaid_days)}</td>
-                      <td data-label="Deduction" className="num">{Number(s.attendance_deduction) ? `−${money(s.attendance_deduction, currency)}` : '—'}</td>
-                      <td data-label="Tier"><TierBadge tier={{ level: r.tier.level, name: s.tier || r.tier.name }} /></td>
-                      <td data-label="Incentive" className="num">{Number(s.incentive) ? `+${money(s.incentive, currency)}` : '—'}</td>
+                      <td data-label="Adjustments" className="num">
+                        {minus === 0 && plus === 0 ? (
+                          <span className="muted">—</span>
+                        ) : (
+                          <div className="stack-xs">
+                            {minus > 0 && <span className="text-red">−{money(minus, currency)}</span>}
+                            {plus > 0 && <span className="text-green">+{money(plus, currency)}</span>}
+                          </div>
+                        )}
+                      </td>
                       <td data-label="Net pay" className="num strong">{money(s.net_pay, currency)}</td>
-                      <td data-label="Status">
-                        {r.record?.status === 'paid' ? <Badge tone="green">Paid</Badge> : r.record ? <Badge tone="amber">Draft</Badge> : <Badge>Preview</Badge>}
+                      <td data-label="Status" style={{ textAlign: 'right' }} onClick={(e) => !paid && e.stopPropagation()}>
+                        {paid ? (
+                          <Badge tone="green"><Check size={12} /> Paid {r.record.paid_on ? format(new Date(`${r.record.paid_on}T00:00:00`), 'dd MMM') : ''}</Badge>
+                        ) : (
+                          <Button size="sm" variant="primary" disabled={!!busy} onClick={() => markPaid([r])}>Pay</Button>
+                        )}
                       </td>
                     </tr>
                   );
                 })}
               </tbody>
+              <tfoot>
+                <tr>
+                  <td data-label="" className="strong">Total</td>
+                  <td data-label="" />
+                  <td data-label="Salary" className="num">{money(totals.base, currency)}</td>
+                  <td data-label="Adjustments" className="num">
+                    <span className="text-red">−{money(totals.minus, currency)}</span> <span className="text-green">+{money(totals.plus, currency)}</span>
+                  </td>
+                  <td data-label="Net pay" className="num strong">{money(totals.net, currency)}</td>
+                  <td data-label="" />
+                </tr>
+              </tfoot>
             </table>
           </div>
         )}

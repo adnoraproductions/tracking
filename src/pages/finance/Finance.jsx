@@ -98,7 +98,7 @@ export default function Finance() {
           {tab === 'overview' && <FinanceOverview {...shared} />}
           {tab === 'clients' && <Clients {...shared} />}
           {tab === 'invoices' && <Invoices {...shared} />}
-          {tab === 'expenses' && <Expenses month={month} currency={currency} toast={toast} />}
+          {tab === 'expenses' && <Expenses month={month} currency={currency} toast={toast} setTab={changeTab} />}
           {tab === 'payroll' && <Payroll month={month} currency={currency} toast={toast} settings={settings} />}
         </>
       )}

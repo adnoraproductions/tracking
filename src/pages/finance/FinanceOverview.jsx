@@ -14,13 +14,19 @@ export default function FinanceOverview({ ledger, month, currency, reload, actio
 
   useEffect(() => {
     (async () => {
-      const [e, p] = await Promise.all([
+      const [e, p, base] = await Promise.all([
         supabase.from('fin_expenses').select('amount').gte('expense_date', startStr).lte('expense_date', endStr),
-        supabase.from('payroll_records').select('net_pay').eq('month', startStr),
+        supabase.from('payroll_records').select('employee_id, net_pay').eq('month', startStr),
+        supabase.from('employee_salaries').select('employee_id, monthly_salary, profiles(role, status)'),
       ]);
+      // Calculated payroll where available, otherwise the expected monthly salary (same as the Expenses tab)
+      const have = new Set((p.data || []).map((x) => x.employee_id));
+      const expected = (base.data || [])
+        .filter((x) => !have.has(x.employee_id) && x.profiles && x.profiles.role !== 'admin' && x.profiles.status !== 'inactive')
+        .reduce((s, x) => s + Number(x.monthly_salary || 0), 0);
       setSpend({
         expenses: (e.data || []).reduce((s, x) => s + Number(x.amount), 0),
-        payroll: (p.data || []).reduce((s, x) => s + Number(x.net_pay), 0),
+        payroll: (p.data || []).reduce((s, x) => s + Number(x.net_pay), 0) + expected,
       });
     })();
   }, [startStr]);
@@ -82,7 +88,7 @@ export default function FinanceOverview({ ledger, month, currency, reload, actio
         <Stat label={`Received in ${m}`} value={money(received, currency)} sub={`Billed ${money(billed, currency)}`} icon={ArrowDownLeft} tone="green" />
         <Stat label="Pending from clients" value={money(outstanding, currency)} sub={`${open.length} open bill${open.length === 1 ? '' : 's'}`} icon={Hourglass} tone="amber" />
         <Stat label="Overdue" value={money(overdue, currency)} sub="Past due date" icon={AlertTriangle} tone="red" />
-        <Stat label={`Spent in ${m}`} value={money(spend.expenses + spend.payroll, currency)} sub={`Expenses ${money(spend.expenses, currency)} · Payroll ${money(spend.payroll, currency)}`} icon={ArrowUpRight} tone="violet" />
+        <Stat label={`Spent in ${m}`} value={money(spend.expenses + spend.payroll, currency)} sub={`Running ${money(spend.expenses, currency)} · Salaries ${money(spend.payroll, currency)}`} icon={ArrowUpRight} tone="violet" />
       </div>
 
       <div className="hero">
