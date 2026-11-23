@@ -27,15 +27,15 @@ import './pages/employee/Employee.css';
 import './pages/admin/Admin.css';
 
 function RootRedirect() {
-  const { user, loading } = useAuth();
+  const { user, role, loading } = useAuth();
   if (loading) return null;
   if (!user) return <Navigate to="/login" replace />;
-  return <Navigate to="/employee" replace />;
+  return <Navigate to={role === USER_ROLES.ADMIN ? '/admin' : '/employee'} replace />;
 }
 
 function RoleGate({ roles }) {
   const { role } = useAuth();
-  if (!roles.includes(role)) return <Navigate to="/employee" replace />;
+  if (!roles.includes(role)) return <Navigate to={role === USER_ROLES.ADMIN ? '/admin' : '/employee'} replace />;
   return <Outlet />;
 }
 
@@ -54,11 +54,15 @@ export default function App() {
             <Route element={<ProtectedRoute allowedRoles={ALL_ROLES} />}>
               <Route element={<AppLayout />}>
                 {/* Everyone */}
-                <Route path="/employee" element={<EmployeeDashboard />} />
-                <Route path="/employee/tasks" element={<MyTasks />} />
-                <Route path="/employee/leaves" element={<MyLeaves />} />
-                <Route path="/employee/attendance" element={<EmployeeAttendance />} />
                 <Route path="/employee/settings" element={<EmployeeSettings />} />
+
+                {/* Employees + project managers (admins don't clock in, take leave or log tasks) */}
+                <Route element={<RoleGate roles={[USER_ROLES.EMPLOYEE, USER_ROLES.MANAGER]} />}>
+                  <Route path="/employee" element={<EmployeeDashboard />} />
+                  <Route path="/employee/tasks" element={<MyTasks />} />
+                  <Route path="/employee/leaves" element={<MyLeaves />} />
+                  <Route path="/employee/attendance" element={<EmployeeAttendance />} />
+                </Route>
 
                 {/* Project managers + admins */}
                 <Route element={<RoleGate roles={[USER_ROLES.MANAGER, USER_ROLES.ADMIN]} />}>

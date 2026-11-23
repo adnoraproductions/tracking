@@ -21,9 +21,28 @@ import { supabase } from '../../lib/supabase/client';
 import PageTransition from '../PageTransition';
 import { Avatar, Loading } from '../ui';
 
+const PROFILE = { to: '/employee/settings', label: 'Profile', short: 'Profile', icon: UserRound };
+const APPROVALS = { to: '/manage/approvals', label: 'Approvals', short: 'Approvals', icon: CheckCheck, badge: 'approvals' };
+const PERFORMANCE = { to: '/manage/performance', label: 'Performance', short: 'Performance', icon: Trophy };
+
+/** Navigation per role. Admins don't clock in, take leave or log tasks, so they get no "My work" section. */
 function buildNav(role) {
-  const isManager = role === 'manager' || role === 'admin';
-  const isAdmin = role === 'admin';
+  if (role === 'admin') {
+    return [
+      {
+        label: 'Admin',
+        items: [
+          { to: '/admin', end: true, label: 'Overview', short: 'Overview', icon: LayoutDashboard },
+          { to: '/admin/attendance', label: 'Team Attendance', short: 'Attendance', icon: CalendarClock },
+          { to: '/admin/employees', label: 'Employees', short: 'Employees', icon: Users },
+          { to: '/admin/finance', label: 'Finance', short: 'Finance', icon: Wallet },
+          { to: '/admin/office', label: 'Office Settings', short: 'Office', icon: MapPin },
+        ],
+      },
+      { label: 'Team', items: [APPROVALS, PERFORMANCE] },
+      { label: 'Account', items: [PROFILE] },
+    ];
+  }
   const sections = [
     {
       label: 'My work',
@@ -32,32 +51,20 @@ function buildNav(role) {
         { to: '/employee/tasks', label: 'Daily Tasks', short: 'Tasks', icon: ClipboardList },
         { to: '/employee/leaves', label: 'Leaves', short: 'Leaves', icon: CalendarDays },
         { to: '/employee/attendance', label: 'Attendance Log', short: 'Log', icon: History },
-        { to: '/employee/settings', label: 'Profile', short: 'Profile', icon: UserRound },
+        PROFILE,
       ],
     },
   ];
-  if (isManager) {
-    sections.push({
-      label: 'Team',
-      items: [
-        { to: '/manage/approvals', label: 'Approvals', short: 'Approvals', icon: CheckCheck, badge: 'approvals' },
-        { to: '/manage/performance', label: 'Performance', short: 'Performance', icon: Trophy },
-      ],
-    });
-  }
-  if (isAdmin) {
-    sections.push({
-      label: 'Admin',
-      items: [
-        { to: '/admin', end: true, label: 'Overview', short: 'Overview', icon: LayoutDashboard },
-        { to: '/admin/attendance', label: 'Attendance', short: 'Attendance', icon: CalendarClock },
-        { to: '/admin/employees', label: 'Employees', short: 'Employees', icon: Users },
-        { to: '/admin/finance', label: 'Finance', short: 'Finance', icon: Wallet },
-        { to: '/admin/office', label: 'Office Settings', short: 'Office', icon: MapPin },
-      ],
-    });
-  }
+  if (role === 'manager') sections.push({ label: 'Team', items: [APPROVALS, PERFORMANCE] });
   return sections;
+}
+
+/** The 4 destinations shown in the phone tab bar (the rest go under "More"). */
+function primaryTabs(role, all) {
+  const by = (to) => all.find((i) => i.to === to);
+  if (role === 'admin') return [by('/admin'), by('/admin/attendance'), by('/manage/approvals'), by('/admin/finance')];
+  if (role === 'manager') return [by('/employee'), by('/employee/tasks'), by('/employee/leaves'), by('/manage/approvals')];
+  return [by('/employee'), by('/employee/tasks'), by('/employee/leaves'), by('/employee/attendance')];
 }
 
 export default function AppLayout() {
@@ -71,9 +78,7 @@ export default function AppLayout() {
   const all = sections.flatMap((s) => s.items);
 
   // Mobile tab bar: 4 primary destinations + "More"
-  const primary = isManager
-    ? [all[0], all[1], all[2], all.find((i) => i.to === '/manage/approvals')]
-    : [all[0], all[1], all[2], all[3]];
+  const primary = primaryTabs(role, all);
   const rest = all.filter((i) => !primary.includes(i));
   const moreActive = rest.some((i) => (i.end ? location.pathname === i.to : location.pathname.startsWith(i.to)));
 
@@ -107,7 +112,7 @@ export default function AppLayout() {
       {/* Desktop sidebar */}
       <aside className="sidebar">
         <div className="sidebar-brand">
-          <NavLink to="/employee" className="brand-chip"><span className="brand-mark" role="img" aria-label="Adnora" style={{ '--h': '26px' }} /></NavLink>
+          <NavLink to={role === 'admin' ? '/admin' : '/employee'} className="brand-chip"><span className="brand-mark" role="img" aria-label="Adnora" style={{ '--h': '26px' }} /></NavLink>
         </div>
         <nav className="sidebar-scroll">
           {sections.map((section) => (
@@ -137,7 +142,7 @@ export default function AppLayout() {
 
       {/* Mobile top bar */}
       <header className="topbar">
-        <NavLink to="/employee" className="brand-chip"><span className="brand-mark" role="img" aria-label="Adnora" style={{ '--h': '18px' }} /></NavLink>
+        <NavLink to={role === 'admin' ? '/admin' : '/employee'} className="brand-chip"><span className="brand-mark" role="img" aria-label="Adnora" style={{ '--h': '18px' }} /></NavLink>
         <NavLink to="/employee/settings" aria-label="Profile" style={{ textDecoration: 'none' }}>
           <Avatar name={profile?.full_name} size="sm" />
         </NavLink>

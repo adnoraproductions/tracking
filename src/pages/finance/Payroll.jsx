@@ -72,7 +72,7 @@ export default function Payroll({ month, currency, toast, settings }) {
     const fullDays = workingDates(start, monthEnd, perWeek, data.holidays).length;
     const elapsedDays = workingDates(start, countUntil, perWeek, data.holidays).length;
     return data.people
-      .filter((p) => p.status !== 'inactive' || data.records[p.id])
+      .filter((p) => (p.status !== 'inactive' && p.role !== 'admin') || data.records[p.id])
       .map((p) => {
         const salary = Number(data.salaries[p.id]?.monthly_salary || 0);
         const present = Math.min(
@@ -250,7 +250,7 @@ export default function Payroll({ month, currency, toast, settings }) {
       />
       <SalaryModal
         open={salaryOpen}
-        people={(data?.people || []).filter((p) => p.status !== 'inactive')}
+        people={(data?.people || []).filter((p) => p.status !== 'inactive' && p.role !== 'admin')}
         salaries={data?.salaries || {}}
         currency={currency}
         onClose={() => setSalaryOpen(false)}

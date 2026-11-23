@@ -4,7 +4,7 @@ import { supabase } from '../../lib/supabase/client';
 import { LogOut } from 'lucide-react';
 
 export default function EmployeeSettings() {
-  const { profile, signOut } = useAuth();
+  const { profile, role, signOut } = useAuth();
   const [status, setStatus] = useState('Checked Out');
 
   // Format date correctly if available
@@ -67,9 +67,11 @@ export default function EmployeeSettings() {
               <p style={{ margin: 0, color: 'var(--emp-text-muted)', fontSize: '14px' }}>{profile?.designation || 'Employee'}</p>
             </div>
           </div>
-          <div className={getStatusClass()}>
-            {status}
-          </div>
+          {role !== 'admin' && (
+            <div className={getStatusClass()}>
+              {status}
+            </div>
+          )}
         </div>
 
         <div className="emp-settings-row">

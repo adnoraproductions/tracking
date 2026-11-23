@@ -4,7 +4,7 @@ import { ArrowDownLeft, ArrowUpRight, Hourglass, AlertTriangle, Users, Wallet, R
 import { supabase } from '../../lib/supabase/client';
 import { money, monthRange, ymd } from '../../lib/format';
 import { Card, Stat, Button, EmptyState, Avatar } from '../../components/ui';
-import { generateRecurringInvoices } from './shared';
+import { generateRecurringInvoices, isRetainerBill } from './shared';
 
 export default function FinanceOverview({ ledger, month, currency, reload, actions, toast, setTab }) {
   const { clients, invoices, payments } = ledger;
@@ -58,7 +58,7 @@ export default function FinanceOverview({ ledger, month, currency, reload, actio
 
   const period = ymd(month);
   const recurring = clients.filter((c) => c.is_active && c.client_type === 'recurring' && Number(c.monthly_fee) > 0);
-  const missing = recurring.filter((c) => !invoices.some((i) => i.client_id === c.id && i.period_month === period && !i.is_cancelled));
+  const missing = recurring.filter((c) => !invoices.some((i) => i.client_id === c.id && isRetainerBill(i, period)));
   const mrr = recurring.reduce((s, c) => s + Number(c.monthly_fee), 0);
 
   const generate = async () => {

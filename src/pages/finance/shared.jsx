@@ -45,10 +45,15 @@ export function InvoiceStateBadge({ state }) {
   return <Badge tone={s.tone}>{s.label}</Badge>;
 }
 
+/** The automatic monthly retainer bill for a period (clients can have other bills in the same month too). */
+export function isRetainerBill(inv, period) {
+  return inv.period_month === period && !inv.is_cancelled && /retainer/i.test(inv.title || '');
+}
+
 /** Create this month's bill for every active recurring client that doesn't have one yet. */
 export async function generateRecurringInvoices(month, clients, invoices) {
   const period = ymd(startOfMonth(month));
-  const existing = new Set(invoices.filter((i) => i.period_month === period && !i.is_cancelled).map((i) => i.client_id));
+  const existing = new Set(invoices.filter((i) => isRetainerBill(i, period)).map((i) => i.client_id));
   const rows = clients
     .filter((c) => c.is_active && c.client_type === 'recurring' && Number(c.monthly_fee) > 0 && !existing.has(c.id))
     .map((c) => {
@@ -232,7 +237,11 @@ export function InvoiceModal({ invoice, clients, payments, currency, onClose, on
     const res = isNew ? await supabase.from('fin_invoices').insert(payload) : await supabase.from('fin_invoices').update(payload).eq('id', invoice.id);
     setSaving(false);
     if (res.error) {
-      return setError(/duplicate key/i.test(res.error.message) ? 'This client already has a bill for that month.' : cleanDbMessage(res.error));
+      return setError(
+        /duplicate key/i.test(res.error.message)
+          ? 'The database still allows only one bill per client per month. Run migrations/002_multiple_bills_per_month.sql in the Supabase SQL editor, then try again.'
+          : cleanDbMessage(res.error),
+      );
     }
     onSaved(isNew ? 'Bill created' : 'Bill updated');
   };
@@ -272,7 +281,7 @@ export function InvoiceModal({ invoice, clients, payments, currency, onClose, on
         <Field label="Amount">
           <input className="input" type="number" min={0} inputMode="decimal" value={f.amount ?? ''} onChange={(e) => set({ amount: e.target.value })} />
         </Field>
-        <Field label="For month" hint="Only for monthly retainers">
+        <Field label="For month" hint="Optional — which month this bill is for">
           <input className="input" type="month" value={f.period_month || ''} onChange={(e) => set({ period_month: e.target.value })} />
         </Field>
         <Field label="Bill date">
