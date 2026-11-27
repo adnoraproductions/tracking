@@ -298,9 +298,9 @@ function RulesSettings({ categories, settings, onSaved }) {
       const { error: e1 } = await supabase
         .from('hr_settings')
         .update({
-          tier1_name: s.tier1_name.trim() || 'Contributor',
-          tier2_name: s.tier2_name.trim() || 'Performer',
-          tier3_name: s.tier3_name.trim() || 'Top Performer',
+          tier1_name: s.tier1_name.trim() || 'P1',
+          tier2_name: s.tier2_name.trim() || 'P2',
+          tier3_name: s.tier3_name.trim() || 'P3',
           tier2_min_points: num(s.tier2_min_points),
           tier3_min_points: num(s.tier3_min_points),
           incentive_amount: num(s.incentive_amount),
