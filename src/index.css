@@ -1777,3 +1777,387 @@
     width: 100%;
   }
 }
+
+/* ==========================================================================
+   Incentive tracker (employee-facing)
+   ========================================================================== */
+.inc-card {
+  display: block;
+  background: var(--brand-surface);
+  color: #fff;
+  border-radius: var(--r-xl);
+  padding: 22px;
+  text-decoration: none;
+  position: relative;
+  overflow: hidden;
+}
+
+.inc-card .tier {
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+.inc-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.inc-plan {
+  font-size: 12px;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.inc-top {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.inc-points {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.inc-big {
+  font-size: 44px;
+  font-weight: 750;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.inc-unit {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.inc-dim {
+  color: rgba(255, 255, 255, 0.58);
+  font-weight: 500;
+}
+
+.inc-earned {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  font-size: 12px;
+}
+
+.inc-earned strong {
+  font-size: 24px;
+  font-weight: 750;
+  color: #c5ef7a;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+
+.inc-plus {
+  font-size: 11px;
+  font-weight: 700;
+  color: #c5ef7a;
+  background: rgba(124, 181, 24, 0.18);
+  padding: 2px 8px;
+  border-radius: 999px;
+  margin-top: 2px;
+}
+
+.inc-headline {
+  margin-top: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.inc-headline svg {
+  color: #a3d64a;
+  flex-shrink: 0;
+}
+
+.inc-sub,
+.inc-msg {
+  margin-top: 4px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.inc-pending-note {
+  margin-top: 10px;
+  display: inline-block;
+  font-size: 12px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: rgba(245, 196, 81, 0.14);
+  color: #f8d982;
+}
+
+/* Track */
+.inc-track-wrap {
+  padding: 30px 6px 54px;
+}
+
+.inc-track-wrap.compact {
+  padding: 16px 4px 10px;
+}
+
+.inc-track {
+  position: relative;
+  height: 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.inc-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #4d7f0c, #7cb518 60%, #b6e45a);
+  box-shadow: 0 0 18px rgba(124, 181, 24, 0.55);
+  transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.inc-pending {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-radius: 0 999px 999px 0;
+  background: repeating-linear-gradient(135deg, rgba(245, 196, 81, 0.55) 0 6px, rgba(245, 196, 81, 0.25) 6px 12px);
+}
+
+.inc-milestone {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.inc-dot {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #1b2414;
+  border: 2px solid rgba(255, 255, 255, 0.28);
+  color: rgba(255, 255, 255, 0.55);
+  z-index: 2;
+}
+
+.inc-milestone.reached .inc-dot {
+  background: #7cb518;
+  border-color: #c5ef7a;
+  color: #0a0f08;
+  box-shadow: 0 0 12px rgba(124, 181, 24, 0.8);
+}
+
+.inc-label {
+  position: absolute;
+  top: 26px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  white-space: nowrap;
+  font-size: 11px;
+  line-height: 1.25;
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.inc-label strong {
+  font-size: 12px;
+  color: #fff;
+}
+
+.inc-label em {
+  font-style: normal;
+  font-weight: 700;
+  color: #c5ef7a;
+}
+
+.inc-milestone:not(.reached) .inc-label em {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.inc-you {
+  position: absolute;
+  top: 50%;
+  width: 4px;
+  height: 22px;
+  border-radius: 4px;
+  background: #fff;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.7);
+  z-index: 1;
+}
+
+/* Chips */
+.inc-pending-note svg {
+  vertical-align: -2px;
+  margin-right: 4px;
+}
+
+.inc-chips {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(128px, 1fr));
+  gap: 10px;
+}
+
+.inc-chip {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 12px;
+}
+
+.inc-chip strong {
+  font-size: 18px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.inc-chip.highlight {
+  background: rgba(124, 181, 24, 0.14);
+  border-color: rgba(124, 181, 24, 0.35);
+}
+
+.inc-mini {
+  height: 5px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+  margin: 2px 0;
+}
+
+.inc-mini > span {
+  display: block;
+  height: 100%;
+  background: #7cb518;
+  border-radius: inherit;
+}
+
+/* Compact (home screen) */
+.inc-compact {
+  padding: 18px;
+}
+
+.inc-compact .inc-head {
+  margin-bottom: 4px;
+}
+
+.inc-compact .inc-headline {
+  margin-top: 6px;
+  font-size: 15px;
+}
+
+.inc-compact-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.inc-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  color: #c5ef7a;
+  font-weight: 650;
+}
+
+@media (max-width: 560px) {
+  .inc-card {
+    padding: 18px;
+  }
+
+  .inc-big {
+    font-size: 38px;
+  }
+
+  .inc-earned {
+    align-items: flex-start;
+  }
+
+  .inc-label {
+    font-size: 10px;
+  }
+}
+
+/* Level badges: 0 = below first slab */
+.tier-0 { background: rgba(148, 163, 184, 0.18); color: #94a3b8; }
+.inc-card .tier-1 { background: rgba(96, 165, 250, 0.18); color: #93c5fd; }
+.inc-card .tier-2 { background: rgba(167, 139, 250, 0.2); color: #c4b5fd; }
+.inc-card .tier-3 { background: linear-gradient(135deg, #f8e3a8, #e9c46a); color: #5c3d00; }
+
+/* Incentive plans (admin) */
+.plan-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 14px;
+}
+
+.slab-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.slab {
+  display: grid;
+  grid-template-columns: 44px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: var(--surface-2);
+  font-size: 13px;
+}
+
+.slab-level {
+  font-weight: 750;
+  display: inline-flex;
+  align-items: center;
+}
+
+.slab-pts {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.slab-amt {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.slab.bonus {
+  background: var(--gold-50);
+  color: var(--gold);
+}
+
+.slab.bonus .slab-pts {
+  color: var(--gold);
+}
+
+.slab-edit {
+  display: grid;
+  grid-template-columns: 80px 1fr 1fr 36px;
+  gap: 8px;
+  align-items: center;
+}

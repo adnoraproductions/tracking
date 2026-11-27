@@ -2,7 +2,8 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { eachDayOfInterval, endOfMonth, format, isAfter, startOfDay } from 'date-fns';
 import { Banknote, Settings2, RefreshCw, Download, CheckCircle2, Info, Check, TrendingDown, TrendingUp } from 'lucide-react';
 import { supabase } from '../../lib/supabase/client';
-import { tierFor, friendlyError, cleanDbMessage } from '../../lib/hr';
+import { friendlyError, cleanDbMessage } from '../../lib/hr';
+import { fetchPlans, fetchAssignments, fetchBonuses, incentivePayout } from '../../lib/incentives';
 import { money, monthRange, round1, ymd } from '../../lib/format';
 import { Card, Button, Badge, TierBadge, EmptyState, Alert, Loading, Modal, Field, Avatar, useConfirm } from '../../components/ui';
 
@@ -33,7 +34,7 @@ export default function Payroll({ month, currency, toast, settings }) {
     setLoading(true);
     setError(null);
     try {
-      const [p, sal, att, lv, tk, hol, rec] = await Promise.all([
+      const [p, sal, att, lv, tk, hol, rec, plans, assigned, bonuses] = await Promise.all([
         supabase.from('profiles').select('id, full_name, employee_code, designation, role, status').order('full_name'),
         supabase.from('employee_salaries').select('*'),
         supabase.from('attendance_days').select('employee_id, date, status').gte('date', startStr).lte('date', endStr),
@@ -41,6 +42,9 @@ export default function Payroll({ month, currency, toast, settings }) {
         supabase.from('daily_tasks').select('employee_id, points_awarded').eq('status', 'approved').gte('task_date', startStr).lte('task_date', endStr),
         supabase.from('holidays').select('date').gte('date', startStr).lte('date', endStr),
         supabase.from('payroll_records').select('*').eq('month', startStr),
+        fetchPlans().catch(() => []),
+        fetchAssignments().catch(() => ({})),
+        fetchBonuses(),
       ]);
       for (const r of [p, sal, att, lv, tk, rec]) if (r.error) throw r.error;
       setData({
@@ -51,6 +55,9 @@ export default function Payroll({ month, currency, toast, settings }) {
         tasks: tk.data || [],
         holidays: new Set((hol.data || []).map((h) => h.date)),
         records: Object.fromEntries((rec.data || []).map((r) => [r.employee_id, r])),
+        plans: Object.fromEntries(plans.map((pl) => [pl.id, pl])),
+        assigned,
+        bonuses,
       });
     } catch (e) {
       setError(friendlyError(e));
@@ -87,7 +94,9 @@ export default function Payroll({ month, currency, toast, settings }) {
         const unpaid = Math.max(0, round1(elapsedDays - present - paidLeave));
         const perDay = fullDays > 0 ? salary / fullDays : 0;
         const points = data.tasks.filter((t) => t.employee_id === p.id).reduce((s, t) => s + Number(t.points_awarded), 0);
-        const tier = tierFor(points, settings);
+        const plan = data.plans[data.assigned[p.id]] || null;
+        const pay = incentivePayout(points, plan, plan ? data.bonuses[plan.id] : null);
+        const tier = { level: pay.level.level, name: pay.level.hasPlan ? pay.level.name : '—', top: pay.level.inBonus, earns: pay.total > 0 };
         const existing = data.records[p.id];
         const computed = {
           employee_id: p.id,
@@ -100,7 +109,7 @@ export default function Payroll({ month, currency, toast, settings }) {
           attendance_deduction: Math.round(perDay * unpaid),
           points,
           tier: tier.name,
-          incentive: tier.level === 3 ? Number(settings.incentive_amount || 0) : 0,
+          incentive: pay.total,
           bonus: Number(existing?.bonus || 0),
           other_deduction: Number(existing?.other_deduction || 0),
           notes: existing?.notes || null,
@@ -108,7 +117,7 @@ export default function Payroll({ month, currency, toast, settings }) {
         };
         computed.net_pay = calcNet(computed);
         const shown = existing || computed;
-        return { person: p, salary, tier, computed, record: existing, shown, perDay };
+        return { person: p, salary, tier, pay, plan, computed, record: existing, shown, perDay };
       });
   }, [data, settings, startStr]);
 
@@ -301,7 +310,7 @@ export default function Payroll({ month, currency, toast, settings }) {
                             <div className="strong truncate">{r.person.full_name}</div>
                             <div className="row" style={{ gap: 6, marginTop: 2 }}>
                               <span className="xs muted truncate">{r.person.designation || r.person.employee_code || ''}</span>
-                              {r.tier.level === 3 && <TierBadge tier={{ level: 3, name: s.tier || r.tier.name }} />}
+                              {r.tier.earns && <TierBadge tier={{ level: r.tier.level, name: s.tier || r.tier.name }} />}
                             </div>
                           </div>
                         </div>
@@ -459,6 +468,9 @@ function PayslipModal({ row, currency, onClose, onSaved }) {
           {line('Days present', round1(f.present_days))}
           {line('Paid leave days', round1(f.paid_leave_days))}
           {line(`Approved points`, `${f.points} · ${f.tier || ''}`)}
+          {line('Incentive plan', row.plan?.name || 'Not assigned')}
+          {row.pay && row.pay.total > 0 && line('Level incentive', money(row.pay.slab, currency))}
+          {row.pay && row.pay.bonus > 0 && line(`Bonus beyond top level (${row.pay.bonusUnits}×)`, money(row.pay.bonus, currency))}
           {line('Per-day rate', money(row.perDay, currency))}
         </div>
 

@@ -6,6 +6,7 @@ import { Loader2, ChevronLeft, ChevronRight, Clock, RefreshCw, MapPin, Home, Bri
 import { Link } from 'react-router-dom';
 import { format, differenceInSeconds } from 'date-fns';
 import CalendarModal from '../../components/CalendarModal';
+import MyIncentiveWidget from '../../components/MyIncentiveWidget';
 
 export default function EmployeeDashboard() {
   const { profile } = useAuth();
@@ -615,6 +616,8 @@ export default function EmployeeDashboard() {
               {error}
             </div>
           )}
+
+          <MyIncentiveWidget />
 
           {/* Shortcuts */}
           <div className="grid-2" style={{ gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '12px' }}>

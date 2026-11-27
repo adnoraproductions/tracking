@@ -3,11 +3,13 @@ import { startOfMonth, format } from 'date-fns';
 import { Plus, Send, Pencil, Trash2, ClipboardList, Target, Sparkles, Clock3, ExternalLink } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase/client';
-import { useHrSettings, tierFor, cleanDbMessage, friendlyError } from '../../lib/hr';
+import { useHrSettings, cleanDbMessage, friendlyError } from '../../lib/hr';
+import { fetchPlans, fetchAssignments, workingDaysInfo, taskPointsToday } from '../../lib/incentives';
+import IncentiveTracker from '../../components/IncentiveTracker';
 import { fetchCategories, summarize, taskPoints } from '../../lib/tasks';
 import { monthRange, prettyDate, ymd } from '../../lib/format';
 import {
-  PageHeader, Card, Button, Badge, StatusBadge, TierBadge, Field, EmptyState, Alert, Loading, Modal, MonthPicker, Progress, useToast, useConfirm,
+  PageHeader, Card, Button, Badge, StatusBadge, Field, EmptyState, Alert, Loading, Modal, MonthPicker, Progress, useToast, useConfirm,
 } from '../../components/ui';
 
 export default function MyTasks() {
@@ -19,6 +21,8 @@ export default function MyTasks() {
   const [categories, setCategories] = useState([]);
   const [kpis, setKpis] = useState([]);
   const [tasks, setTasks] = useState([]);
+  const [plan, setPlan] = useState(null);
+  const [holidays, setHolidays] = useState(new Set());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [editing, setEditing] = useState(null); // null | {} (new) | task
@@ -31,7 +35,7 @@ export default function MyTasks() {
     setError(null);
     try {
       const { startStr, endStr } = monthRange(month);
-      const [cats, k, t] = await Promise.all([
+      const [cats, k, t, plans, assigned, hol] = await Promise.all([
         fetchCategories({ activeOnly: false }),
         supabase.from('employee_kpis').select('*').eq('employee_id', profile.id),
         supabase
@@ -42,8 +46,13 @@ export default function MyTasks() {
           .lte('task_date', endStr)
           .order('task_date', { ascending: false })
           .order('created_at', { ascending: false }),
+        fetchPlans().catch(() => []),
+        fetchAssignments().catch(() => ({})),
+        supabase.from('holidays').select('date').gte('date', startStr).lte('date', endStr),
       ]);
       if (k.error) throw k.error;
+      setPlan(plans.find((p) => p.id === assigned[profile.id]) || null);
+      setHolidays(new Set((hol.data || []).map((h) => h.date)));
       if (t.error) throw t.error;
       setCategories(cats);
       setKpis(k.data || []);
@@ -60,7 +69,8 @@ export default function MyTasks() {
   }, [profile, month]);
 
   const sum = summarize(tasks, catMap);
-  const tier = tierFor(sum.points, settings);
+  const days = workingDaysInfo(month, Number(settings.working_days_per_week) || 6, holidays);
+  const todayPts = taskPointsToday(tasks, catMap);
   const drafts = tasks.filter((t) => t.status === 'draft' || t.status === 'rejected');
 
   const submitDrafts = async () => {
@@ -121,29 +131,17 @@ export default function MyTasks() {
 
       {error && <Alert>{error}</Alert>}
 
-      {/* Points + tier hero */}
-      <div className="hero">
-        <div className="row-between wrap" style={{ alignItems: 'flex-start' }}>
-          <div>
-            <div className="muted small">{isCurrentMonth ? 'Points this month' : `Points in ${format(month, 'MMMM')}`}</div>
-            <div className="hero-value">{sum.points}</div>
-            <div className="muted small" style={{ marginTop: 4 }}>
-              {sum.pendingPoints > 0 ? `+${sum.pendingPoints} waiting for approval` : `${sum.approvedCount} approved tasks`}
-            </div>
-          </div>
-          <TierBadge tier={tier} />
-        </div>
-        <div style={{ marginTop: 18 }}>
-          <div className="progress" style={{ background: 'rgba(255,255,255,0.14)' }}>
-            <span style={{ width: `${tier.next ? Math.min(100, (sum.points / tier.next) * 100) : 100}%`, background: tier.level === 3 ? '#f5c451' : 'var(--brand-lime)' }} />
-          </div>
-          <div className="muted xs" style={{ marginTop: 8 }}>
-            {tier.level === 1 && `${tier.next - sum.points} more points to reach ${settings.tier2_name}`}
-            {tier.level === 2 && `${tier.next - sum.points} more points to reach ${settings.tier3_name} and earn the incentive`}
-            {tier.level === 3 && `Top tier reached — you're eligible for this month's incentive 🎉`}
-          </div>
-        </div>
-      </div>
+      {/* Incentive tracker */}
+      {!loading && (
+        <IncentiveTracker
+          plan={plan}
+          points={sum.points}
+          pending={sum.pendingPoints}
+          today={isCurrentMonth ? todayPts : 0}
+          days={days}
+          currency={settings.currency}
+        />
+      )}
 
       <div className="grid-2">
         <Card title="Monthly KPI" subtitle="Minimum target per category" pad={kpiRows.length > 0}>
@@ -180,9 +178,12 @@ export default function MyTasks() {
                   <Badge tone={c.is_minor ? 'gray' : 'green'}>{c.points} pts</Badge>
                 </div>
               ))}
-            <div className="xs muted" style={{ marginTop: 4 }}>
-              {settings.tier1_name} &lt; {settings.tier2_min_points} pts · {settings.tier2_name} {settings.tier2_min_points}+ · {settings.tier3_name} {settings.tier3_min_points}+ (incentive)
-            </div>
+            {plan?.slabs?.length > 0 && (
+              <div className="xs muted" style={{ marginTop: 4 }}>
+                {plan.slabs.map((sl) => `${sl.level} ${sl.min_points}+`).join(' · ')}
+                {plan.daily_points ? ` · Daily KPI ${plan.daily_points} pts` : ''}
+              </div>
+            )}
           </div>
         </Card>
       </div>
