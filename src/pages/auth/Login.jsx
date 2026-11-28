@@ -44,36 +44,67 @@ export default function Login() {
     <div className="login">
       {/* Brand panel */}
       <aside className="login-brand">
-        <span className="brand-mark login-logo" role="img" aria-label="Adnora Productions" />
-
-        <div className="login-tagline">
-          <p>
-            Ideas That <span>Connect.</span>
-          </p>
-          <p>
-            Designs That <span>Inspire.</span>
-          </p>
-          <p>
-            Results That <span>Matter.</span>
-          </p>
+        <div className="login-brand-top">
+          <span className="login-kicker">Adnora Productions</span>
+          <span className="login-kicker dim">Teamwork</span>
         </div>
 
-        <ul className="login-features">
-          <li>
-            <span><Clock3 size={16} /></span>
-            Check in from office, home or the field
-          </li>
-          <li>
-            <span><Trophy size={16} /></span>
-            Log daily work and track your incentives
-          </li>
-          <li>
-            <span><CalendarDays size={16} /></span>
-            Apply for leave in a few taps
-          </li>
-        </ul>
+        <div className="login-hero">
+          <div className="login-glass">
+            <span className="brand-mark login-logo" role="img" aria-label="Adnora Productions" />
+          </div>
+          <div className="login-float f1" aria-hidden="true">
+            <span className="login-float-icon"><Clock3 size={15} /></span>
+            <span>
+              <strong>Checked in</strong>
+              <em>Office · 9:02 AM</em>
+            </span>
+          </div>
+          <div className="login-float f2" aria-hidden="true">
+            <span className="login-float-icon lime"><Trophy size={15} /></span>
+            <span>
+              <strong>P2 unlocked</strong>
+              <em>₹2,000 incentive</em>
+            </span>
+          </div>
+          <div className="login-float f3" aria-hidden="true">
+            <span className="login-float-icon"><CalendarDays size={15} /></span>
+            <span>
+              <strong>Leave approved</strong>
+              <em>Fri, 12 Dec</em>
+            </span>
+          </div>
+        </div>
 
-        <div className="login-copy">© {new Date().getFullYear()} Adnora Productions</div>
+        <div className="login-bottom">
+          <div className="login-tagline">
+            <p>
+              Ideas That <span>Connect.</span>
+            </p>
+            <p>
+              Designs That <span>Inspire.</span>
+            </p>
+            <p>
+              Results That <span>Matter.</span>
+            </p>
+          </div>
+          <ul className="login-features">
+            <li>
+              <span><Clock3 size={16} /></span>
+              Attendance from office, home or field
+            </li>
+            <li>
+              <span><Trophy size={16} /></span>
+              Daily tasks, points &amp; incentives
+            </li>
+            <li>
+              <span><CalendarDays size={16} /></span>
+              Leave requests in a few taps
+            </li>
+          </ul>
+        </div>
+
+        <div className="login-copy">© {new Date().getFullYear()} Adnora Productions · teamwork.adnoraproductions.in</div>
       </aside>
 
       {/* Form */}
