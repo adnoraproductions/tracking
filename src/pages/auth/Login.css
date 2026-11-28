@@ -1,7 +1,7 @@
 /* ==========================================================================
    Sign-in — Adnora brand
    Desktop: dark brand panel (logo + tagline) | form, blended with a soft edge
-   Phone:   full dark screen with the form on a dark card
+   Phone:   compact brand card on top, same white form below
    ========================================================================== */
 .login {
   --lime: #7cb518;
@@ -267,149 +267,64 @@
 }
 
 /* ==========================================================================
-   Phone & small tablet: full dark, app-style
+   Phone & small tablet: standard layout — compact brand card on top,
+   the same white form as desktop below. No extra effects.
    ========================================================================== */
 @media (max-width: 900px) {
   .login {
     grid-template-columns: 1fr;
     grid-template-rows: auto 1fr;
-    background:
-      radial-gradient(90% 35% at 50% 8%, rgba(124, 181, 24, 0.20) 0%, transparent 75%),
-      radial-gradient(80% 30% at 0% 100%, rgba(124, 181, 24, 0.20) 0%, transparent 70%),
-      linear-gradient(180deg, #0b1108 0%, #040604 100%);
-    color: #fff;
-  }
-
-  .login {
-    padding: 0;
+    padding: calc(12px + env(safe-area-inset-top)) 12px 0;
   }
 
   .login-brand {
-    background: none;
-    box-shadow: none;
-    border-radius: 0;
-    padding: calc(44px + env(safe-area-inset-top)) 24px 8px;
     align-items: center;
-    text-align: center;
+    justify-content: center;
+    padding: 30px 24px;
+    border-radius: 20px;
   }
 
-  .login-brand::before,
+  .login .login-logo {
+    --h: 34px;
+  }
+
+  .login-tagline,
   .login-copy {
     display: none;
   }
 
-  .login .login-logo {
-    --h: 46px;
-  }
-
-  .login-tagline {
-    margin-top: 28px;
-  }
-
-  .login-tagline p {
-    font-size: 22px;
-    line-height: 1.25;
-  }
-
   .login-main {
-    background: transparent;
     align-items: flex-start;
-    padding: 24px 16px calc(28px + env(safe-area-inset-bottom));
+    padding: 28px 12px calc(24px + env(safe-area-inset-bottom));
   }
 
   .login-card {
-    max-width: 460px;
+    max-width: 440px;
     margin: 0 auto;
-    padding: 24px 20px 22px;
-    border-radius: 26px;
-    background: linear-gradient(160deg, #161f11 0%, #0b1008 100%);
-    border: 1px solid rgba(255, 255, 255, 0.09);
-    box-shadow: 0 30px 60px -30px rgba(0, 0, 0, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.07);
-  }
-
-  .login-eyebrow {
-    background: rgba(124, 181, 24, 0.16);
-    color: var(--lime-soft);
-    border: 1px solid rgba(124, 181, 24, 0.28);
+    animation: none;
   }
 
   .login-card h1 {
-    color: #fff;
+    margin-top: 12px;
     font-size: 26px;
-    margin-top: 14px;
   }
 
   .login-sub {
-    color: rgba(255, 255, 255, 0.6);
     margin-bottom: 22px;
     font-size: 14px;
   }
 
-  .login-label {
-    color: rgba(255, 255, 255, 0.78);
+  .login-form {
+    gap: 14px;
   }
 
-  .login-input {
-    background: #070a05;
-    border-color: rgba(255, 255, 255, 0.12);
-    color: rgba(255, 255, 255, 0.45);
-  }
-
-  .login-input:focus-within {
-    background: #050704;
-    border-color: var(--lime);
-    box-shadow: 0 0 0 4px rgba(124, 181, 24, 0.22);
-    color: var(--lime-soft);
-  }
-
-  .login-input input {
-    color: #fff;
-  }
-
-  .login-input input::placeholder {
-    color: rgba(255, 255, 255, 0.35);
-  }
-
-  .login-input input:-webkit-autofill {
-    -webkit-text-fill-color: #fff;
-  }
-
-  .login-eye {
-    color: rgba(255, 255, 255, 0.6);
-  }
-
-  .login-eye:hover {
-    background: rgba(255, 255, 255, 0.08);
-  }
-
+  .login-input,
   .login-submit {
-    background: linear-gradient(135deg, #8bc53f, #5f9a12);
-    color: #0a0f08;
-    font-weight: 750;
-    box-shadow: 0 16px 32px -14px var(--lime-glow), inset 0 1px 0 rgba(255, 255, 255, 0.35);
-  }
-
-  .login-submit svg {
-    color: #0a0f08;
-  }
-
-  .login-submit:disabled {
-    opacity: 0.45;
-  }
-
-  .login-submit .spinner {
-    border-color: rgba(10, 15, 8, 0.25);
-    border-top-color: #0a0f08;
-  }
-
-  .login-error {
-    background: rgba(240, 68, 56, 0.14);
-    border-color: rgba(240, 68, 56, 0.3);
-    color: #fda29b;
+    height: 52px;
   }
 
   .login-help {
-    color: rgba(255, 255, 255, 0.5);
+    margin-top: 20px;
   }
 }
 
