@@ -1,7 +1,7 @@
 /* ==========================================================================
    Sign-in — Adnora brand
    Desktop: dark brand panel (logo + tagline) | form, blended with a soft edge
-   Phone:   compact brand card on top, same white form below
+   Phone:   edge-to-edge brand header, white form on a rounded sheet
    ========================================================================== */
 .login {
   --lime: #7cb518;
@@ -267,35 +267,45 @@
 }
 
 /* ==========================================================================
-   Phone & small tablet: standard layout — compact brand card on top,
-   the same white form as desktop below. No extra effects.
+   Phone & small tablet: edge-to-edge brand header (logo + tagline)
+   with the white form on a rounded sheet below.
    ========================================================================== */
 @media (max-width: 900px) {
   .login {
     grid-template-columns: 1fr;
     grid-template-rows: auto 1fr;
-    padding: calc(12px + env(safe-area-inset-top)) 12px 0;
+    padding: 0;
+    background: #fff;
   }
 
   .login-brand {
-    align-items: center;
-    justify-content: center;
-    padding: 30px 24px;
-    border-radius: 20px;
+    min-height: 38vh;
+    min-height: 38svh;
+    padding: calc(28px + env(safe-area-inset-top)) 24px 52px;
+    border-radius: 0;
   }
 
   .login .login-logo {
-    --h: 34px;
+    --h: 30px;
   }
 
-  .login-tagline,
+  .login-tagline p {
+    font-size: 26px;
+    line-height: 1.15;
+  }
+
   .login-copy {
     display: none;
   }
 
   .login-main {
+    position: relative;
+    z-index: 2;
+    margin-top: -24px;
+    border-radius: 24px 24px 0 0;
+    background: #fff;
     align-items: flex-start;
-    padding: 28px 12px calc(24px + env(safe-area-inset-bottom));
+    padding: 28px 24px calc(24px + env(safe-area-inset-bottom));
   }
 
   .login-card {
@@ -304,8 +314,12 @@
     animation: none;
   }
 
+  .login-eyebrow {
+    display: none;
+  }
+
   .login-card h1 {
-    margin-top: 12px;
+    margin: 0 0 4px;
     font-size: 26px;
   }
 
@@ -325,6 +339,22 @@
 
   .login-help {
     margin-top: 20px;
+  }
+}
+
+/* Short phones (iPhone SE): tighten the header so everything fits */
+@media (max-width: 900px) and (max-height: 700px) {
+  .login-brand {
+    min-height: 0;
+    padding-bottom: 44px;
+  }
+
+  .login-tagline {
+    margin-top: 28px;
+  }
+
+  .login-tagline p {
+    font-size: 22px;
   }
 }
 
