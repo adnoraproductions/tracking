@@ -1,103 +1,152 @@
 import React, { useState } from 'react';
+import { Navigate } from 'react-router-dom';
+import { Mail, Lock, Eye, EyeOff, ArrowRight, Clock3, Trophy, CalendarDays, AlertCircle } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
-import { useNavigate, Navigate } from 'react-router-dom';
-import { Fingerprint, Loader2 } from 'lucide-react';
-import '../employee/Employee.css';
+import './Login.css';
+
+function friendlyLoginError(err) {
+  const msg = err?.message || '';
+  if (/invalid login credentials/i.test(msg)) return 'That email or password is incorrect. Please try again.';
+  if (/email not confirmed/i.test(msg)) return 'This account has not been activated yet. Please contact your admin.';
+  if (/failed to fetch|network/i.test(msg)) return 'No internet connection. Check your network and try again.';
+  return msg || 'Could not sign in. Please try again.';
+}
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  
-  const { signIn, user, role, loading: authLoading } = useAuth();
-  const navigate = useNavigate();
 
-  // If already logged in, redirect based on role
+  const { signIn, user, role, loading: authLoading } = useAuth();
+
+  // Already signed in → go to the right home screen
   if (!authLoading && user) {
-    if (role === 'admin') return <Navigate to="/admin" replace />;
-    return <Navigate to="/employee" replace />;
+    return <Navigate to={role === 'admin' ? '/admin' : '/employee'} replace />;
   }
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
-
     try {
-      await signIn(email, password);
-      // AuthContext will automatically update and redirect will happen
+      await signIn(email.trim(), password);
+      // AuthContext updates and the redirect above takes over
     } catch (err) {
       console.error('Login error:', err);
-      setError(err.message || 'Failed to sign in. Please check your credentials.');
+      setError(friendlyLoginError(err));
       setLoading(false);
     }
   };
 
   return (
-    <div className="login-container-white">
-      <div className="login-card-white">
-        <div className="login-icon-box">
-          <Fingerprint size={32} />
+    <div className="login">
+      {/* Brand panel */}
+      <aside className="login-brand">
+        <span className="brand-mark login-logo" role="img" aria-label="Adnora Productions" />
+
+        <div className="login-tagline">
+          <p>
+            Ideas That <span>Connect.</span>
+          </p>
+          <p>
+            Designs That <span>Inspire.</span>
+          </p>
+          <p>
+            Results That <span>Matter.</span>
+          </p>
         </div>
-        
-        <h1 className="login-title-dark">Office Time Tracker</h1>
-        <p className="login-subtitle-dark">Sign in with your Email Address.</p>
 
-        {error && (
-          <div style={{ backgroundColor: '#fef2f2', color: '#ef4444', padding: '12px', borderRadius: '8px', marginBottom: '24px', fontSize: '14px' }}>
-            {error}
-          </div>
-        )}
+        <ul className="login-features">
+          <li>
+            <span><Clock3 size={16} /></span>
+            Check in from office, home or the field
+          </li>
+          <li>
+            <span><Trophy size={16} /></span>
+            Log daily work and track your incentives
+          </li>
+          <li>
+            <span><CalendarDays size={16} /></span>
+            Apply for leave in a few taps
+          </li>
+        </ul>
 
-        <form onSubmit={handleLogin}>
-          <div style={{ backgroundColor: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: '16px', padding: '16px', marginBottom: '24px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', color: '#6b7280', fontSize: '12px', textTransform: 'uppercase', fontWeight: '600' }}>
-              <span style={{width: '8px', height: '8px', backgroundColor: '#059669', borderRadius: '50%'}}></span>
-              Employee Sign In
+        <div className="login-copy">© {new Date().getFullYear()} Adnora Productions</div>
+      </aside>
+
+      {/* Form */}
+      <main className="login-main">
+        <div className="login-card">
+          <div className="login-eyebrow">Adnora Teamwork</div>
+          <h1>Welcome back</h1>
+          <p className="login-sub">Sign in with your work email to continue.</p>
+
+          {error && (
+            <div className="login-error" role="alert">
+              <AlertCircle size={16} />
+              <span>{error}</span>
             </div>
+          )}
 
-            <div style={{ marginBottom: '16px' }}>
-              <label style={{ display: 'block', fontSize: '12px', color: '#9ca3af', marginBottom: '4px' }}>Email Address</label>
-              <input 
-                type="email" 
-                required 
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                style={{ width: '100%', border: 'none', backgroundColor: 'transparent', fontSize: '16px', color: '#111827', outline: 'none' }}
-                placeholder="employee@adnora.com"
-              />
-            </div>
+          <form onSubmit={handleLogin} className="login-form" noValidate={false}>
+            <label className="login-field">
+              <span className="login-label">Email</span>
+              <span className="login-input">
+                <Mail size={18} />
+                <input
+                  type="email"
+                  required
+                  autoComplete="email"
+                  inputMode="email"
+                  autoCapitalize="none"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@adnoraproductions.in"
+                />
+              </span>
+            </label>
 
-            <div style={{ borderTop: '1px solid #e5e7eb', margin: '0 -16px 16px -16px' }}></div>
+            <label className="login-field">
+              <span className="login-label">Password</span>
+              <span className="login-input">
+                <Lock size={18} />
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  required
+                  autoComplete="current-password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Enter your password"
+                />
+                <button
+                  type="button"
+                  className="login-eye"
+                  onClick={() => setShowPassword((v) => !v)}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </span>
+            </label>
 
-            <div>
-              <label style={{ display: 'block', fontSize: '12px', color: '#9ca3af', marginBottom: '4px' }}>Password</label>
-              <input 
-                type="password" 
-                required 
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                style={{ width: '100%', border: 'none', backgroundColor: 'transparent', fontSize: '16px', color: '#111827', outline: 'none' }}
-                placeholder="••••••••"
-              />
-            </div>
-          </div>
+            <button type="submit" className="login-submit" disabled={loading || !email || !password}>
+              {loading ? (
+                <span className="spinner sm" />
+              ) : (
+                <>
+                  Sign in <ArrowRight size={18} />
+                </>
+              )}
+            </button>
+          </form>
 
-          <button 
-            type="submit" 
-            disabled={loading}
-            className="emp-btn-large primary"
-          >
-            {loading ? <div className="skeuo-loader sm"></div> : 'Continue'}
-          </button>
-        </form>
-
-        <div style={{ marginTop: '24px', display: 'flex', alignItems: 'center', gap: '8px', padding: '16px', backgroundColor: '#f0fdf4', border: '1px solid #d1fae5', borderRadius: '16px', color: '#059669', fontSize: '13px' }}>
-          <div style={{ width: '20px', height: '20px', borderRadius: '50%', backgroundColor: '#059669', color: 'white', display: 'flex', justifyContent: 'center', alignItems: 'center', fontSize: '10px' }}>✓</div>
-          Attendance syncs automatically after sign-in.
+          <p className="login-help">
+            Forgot your password? Ask your admin to reset it from the Employees page.
+          </p>
         </div>
-      </div>
+      </main>
     </div>
   );
 }
