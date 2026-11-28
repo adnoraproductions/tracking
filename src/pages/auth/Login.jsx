@@ -44,6 +44,7 @@ export default function Login() {
     <div className="login">
       {/* Brand panel */}
       <aside className="login-brand">
+        <div className="login-fade" aria-hidden="true" />
         <span className="brand-mark login-logo" role="img" aria-label="Adnora Productions" />
 
         <div className="login-tagline">
